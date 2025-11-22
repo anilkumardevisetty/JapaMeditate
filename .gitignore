@@ -1,0 +1,20 @@
+# Xcode
+build/
+DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcuserdata/
+*.ipa
+
+# SwiftPM
+/.build/
+
+# Cocoapods
+Pods/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+
+# AdMob keys (optional)
+GoogleService-Info.plist
