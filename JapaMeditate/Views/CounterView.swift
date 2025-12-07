@@ -1,10 +1,3 @@
-//
-//  CounterView.swift
-//  Japa108App
-//
-//  Created by Anilkumar Devisetty on 11/15/25.
-//
-
 import SwiftUI
 import UIKit
 import Combine
@@ -24,7 +17,7 @@ struct CounterView: View {
     private var targetCount: Int = 108
 
     @AppStorage(SettingsKeys.wordAnimationEnabled)
-    private var wordAnimationEnabled: Bool = true
+    private var wordAnimationEnabled: Bool = false
 
     @AppStorage("selectedTheme")
     private var selectedTheme: AppTheme = .saffron
@@ -40,7 +33,6 @@ struct CounterView: View {
     
     // MARK: - Mantra text helpers
 
-    /// This is the mantra currently selected, resolving custom vs preset.
     var currentDisplayedMantra: String {
         let mantraEnum = Mantra(rawValue: selectedMantra) ?? .omNamahShivaya
         return mantraEnum == .custom ? customMantraText : mantraEnum.rawValue
@@ -56,12 +48,10 @@ struct CounterView: View {
         return mantraEnum.transliteration
     }
 
-    
     var currentMantra: Mantra {
         Mantra(rawValue: selectedMantra) ?? .omNamahShivaya
     }
 
-    /// Split the mantra into words for word-by-word animation.
     var mantraWords: [String] {
         let cleaned = currentDisplayedMantra
             .replacingOccurrences(of: "\n", with: " ")
@@ -74,7 +64,6 @@ struct CounterView: View {
 
     // MARK: - Bead placement around circle
 
-    /// Returns the x/y offset for bead i out of total around a circle of given size.
     func positionForBead(in size: CGFloat, index: Int, total: Int = 108) -> CGPoint {
         let angle = (Double(index) / Double(total)) * 2 * Double.pi - Double.pi / 2
         let radius = Double(size) * 0.46
@@ -87,223 +76,236 @@ struct CounterView: View {
 
     var body: some View {
         ZStack {
+            // MARK: App background (white)
+            Color.white
+                .ignoresSafeArea()
+
+            // MARK: Completion overlay
             if viewModel.justCompleted {
-                VStack(spacing: 16) {
-                    Text("🙏 Congratulations! 🙏")
-                        .font(.largeTitle.bold())
-                        .foregroundColor(.white)
+                ZStack {
+                    selectedTheme.background
+                        .opacity(0.9)
+                        .ignoresSafeArea()
 
-                    Text("You completed 108 chants.\nMay peace and blessings be with you.")
-                        .font(.headline)
-                        //.foregroundColor(.white.opacity(0.9))
-                        .multilineTextAlignment(.center)
-
-                    Button(action: {
-                        withAnimation {
-                            viewModel.justCompleted = false
-                        }
-                    }) {
-                        Text("Continue")
-                            .font(.headline.bold())
+                    VStack(spacing: 16) {
+                        Text("🙏 Congratulations! 🙏")
+                            .font(.largeTitle.bold())
                             .foregroundColor(.white)
-                            .padding(.horizontal, 30)
-                            .padding(.vertical, 12)
-                            .background(Color.white.opacity(0.2))
-                            .clipShape(Capsule())
+
+                        Text("You completed 108 chants.\nMay peace and blessings be with you.")
+                            .font(.headline)
+                            .foregroundColor(.white.opacity(0.95))
+                            .multilineTextAlignment(.center)
+
+                        Button(action: {
+                            withAnimation {
+                                viewModel.justCompleted = false
+                            }
+                        }) {
+                            Text("Continue")
+                                .font(.headline.bold())
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 30)
+                                .padding(.vertical, 12)
+                                .background(Color.white.opacity(0.2))
+                                .clipShape(Capsule())
+                        }
+
+                        StyledBanner()
+                            .padding(.top, 8)
                     }
-                    StyledBanner() // 👈 looks like part of the UI
-                            .padding(.bottom, 10)
+                    .padding()
                 }
-                .padding()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.black.opacity(0.45))
                 .transition(.opacity)
                 .zIndex(999)
             }
 
-            
-            // MARK: Background gradient
-            selectedTheme.background
-                .ignoresSafeArea()
+            VStack(spacing: 16) {
+                Spacer(minLength: 8)
 
-            // MARK: Background ॐ
-            GeometryReader { geo in
-                Text("ॐ")
-                    .font(.system(size: geo.size.width * 0.6, weight: .bold))
-                    .foregroundColor(.white.opacity(0.1))
-                    .rotationEffect(.degrees(0))
-                    .position(
-                        x: geo.size.width / 2,
-                        y: geo.size.height * 0.42
-                    )
-            }
-            .allowsHitTesting(false)
+                // MARK: Tile 1 – Intro
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("JAPA MODE")
+                            .font(.caption2.smallCaps())
+                            .foregroundColor(.white.opacity(0.9))
+                        Spacer()
+                        if viewModel.count > 0 {
+                            Text("\(viewModel.count)/\(viewModel.total)")
+                                .font(.caption.bold())
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(Color.white.opacity(0.2))
+                                .cornerRadius(12)
+                                .foregroundColor(.white)
+                        }
+                    }
 
-            // MARK: Word animation overlay (above circle)
-            if wordAnimationEnabled && showWord {
-                Text(currentWord)
-                    .font(.system(size: 40, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.95))
-                    .padding(.horizontal, 12)
-                    .multilineTextAlignment(.center)
-                    .scaleEffect(showWord ? 1 : 0.6)
-                    .opacity(showWord ? 1 : 0)
-                    .transition(.opacity.combined(with: .scale))
-                    .zIndex(50)
-                    .offset(y: -180)
-            }
-
-            VStack(spacing: 24) {
-                // MARK: Title
-                VStack(spacing: 4) {
-                    Text("Japa Mode")
-                        .font(.title2.bold())
+                    Text("Chant with focus and devotion.")
+                        .font(.title3.bold())
                         .foregroundColor(.white)
 
-                    Text("Japa Mantra Chant Counter")
-                        .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.8))
+                    Text("Tap the circle with ॐ to count each mantra.")
+                        .font(.footnote)
+                        .foregroundColor(.white.opacity(0.95))
                 }
+                .padding(16)
+                .background(selectedTheme.background)
+                .cornerRadius(24)
+                .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
 
-                Spacer(minLength: 10)
-
-                // MARK: Counter Circle + Mala
+                // MARK: Tile 2 – Circle + ॐ + beads
                 ZStack {
-                    GeometryReader { geo in
-                        let size = min(geo.size.width, geo.size.height)
+                    selectedTheme.background
+                        .cornerRadius(24)
+                        .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
 
-                        ZStack {
-                            // 1) Background ring
-                            Circle()
-                                .stroke(
-                                    Color.white.opacity(0.15),
-                                    style: StrokeStyle(lineWidth: 16)
-                                )
-
-                            // 2) Progress ring (based on viewModel.progress)
-                            Circle()
-                                .trim(from: 0, to: viewModel.progress)
-                                .stroke(
-                                    selectedTheme.ringGradient,
-                                    style: StrokeStyle(lineWidth: 16, lineCap: .round)
-                                )
-                                .rotationEffect(.degrees(-90))
-                                .animation(.easeOut(duration: 0.2), value: viewModel.progress)
-
-                            // 3) Full 108-bead mala ring
-                            ForEach(0..<108, id: \.self) { i in
-                                let point = positionForBead(in: size, index: i)
-
-                                Circle()
-                                    .fill(beadStates[i]
-                                          ? Color.white
-                                          : Color.white.opacity(0.25))
-                                    .frame(
-                                        width: beadStates[i] ? 10 : 8,
-                                        height: beadStates[i] ? 10 : 8
-                                    )
-                                    .shadow(
-                                        color: beadStates[i]
-                                            ? Color.white.opacity(0.4)
-                                            : Color.clear,
-                                        radius: beadStates[i] ? 4 : 0
-                                    )
-                                    .offset(x: point.x, y: point.y)
-                            }
-
-                            // 4) Count + mantra text
-                            VStack(spacing: 8) {
-                                Text("\(viewModel.count)")
-                                    .font(.system(size: 52, weight: .bold))
-                                    .foregroundColor(.white)
-
-                                Text("/ \(viewModel.total)")
-                                    .font(.headline)
-                                    .foregroundColor(.white.opacity(0.85))
-
-                                Text(currentDisplayedMantra)
-                                    .font(.title3.weight(.semibold))
-                                    .foregroundColor(.white)
-                                    .multilineTextAlignment(.center)
-                                    .padding(.top, 8)
-
-                                Text("Tap to count")
-                                    .font(.caption)
-                                    .foregroundColor(.white.opacity(0.75))
-                            }
+                    VStack(spacing: 12) {
+                        // Word animation overlay (above circle)
+                        if wordAnimationEnabled && showWord {
+                            Text(currentWord)
+                                .font(.system(size: 32, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.98))
+                                .padding(.horizontal, 12)
+                                .multilineTextAlignment(.center)
+                                .scaleEffect(showWord ? 1 : 0.6)
+                                .opacity(showWord ? 1 : 0)
+                                .transition(.opacity.combined(with: .scale))
+                                .zIndex(50)
                         }
-                        .frame(width: size * 0.85, height: size * 0.85)
-                        .position(x: geo.size.width / 2, y: geo.size.height / 2)
+
+                        // Counter Circle + Mala + centered ॐ
+                        GeometryReader { geo in
+                            let size = min(geo.size.width, geo.size.height)
+
+                            ZStack {
+                                // ॐ watermark, centered
+                                Text("ॐ")
+                                    .font(.system(size: size * 0.8, weight: .bold))
+                                    .foregroundColor(.white.opacity(0.08))
+
+                                // 1) Inner background ring
+                                Circle()
+                                    .stroke(
+                                        Color.white.opacity(0.25),
+                                        style: StrokeStyle(lineWidth: 14)
+                                    )
+
+                                // 🚫 NO progress Circle() here anymore
+
+                                // 2) Beads ring – this is now the ONLY progress indicator
+                                ForEach(0..<108, id: \.self) { i in
+                                    // if you want beads slightly outside the circle, tweak multiplier
+                                    let point = positionForBead(in: size * 1.05, index: i)
+
+                                    Circle()
+                                        .fill(
+                                            beadStates[i]
+                                            ? Color.white                         // lit / completed
+                                            : Color.white.opacity(0.25)           // not yet counted
+                                        )
+                                        .frame(
+                                            width: beadStates[i] ? 10 : 8,
+                                            height: beadStates[i] ? 10 : 8
+                                        )
+                                        .shadow(
+                                            color: beadStates[i]
+                                                ? Color.white.opacity(0.4)
+                                                : .clear,
+                                            radius: beadStates[i] ? 4 : 0
+                                        )
+                                        .offset(x: point.x, y: point.y)
+                                }
+
+                                // 3) Count + mantra text (unchanged)
+                                VStack(spacing: 8) {
+                                    Text("\(viewModel.count)")
+                                        .font(.system(size: 52, weight: .bold))
+                                        .foregroundColor(.white)
+
+                                    Text("/ \(viewModel.total)")
+                                        .font(.headline)
+                                        .foregroundColor(.white.opacity(0.9))
+
+                                    Text("Tap anywhere on this tile to count")
+                                        .font(.caption2)
+                                        .foregroundColor(.white.opacity(0.85))
+                                }
+                            }
+                            .frame(width: size * 0.90, height: size * 0.90)
+                            .position(x: geo.size.width / 2, y: geo.size.height / 2)
+                        }
+                        .frame(height: 260)
+                        .frame(maxWidth: .infinity)
+
+
+                        // ✅ Haptics text is now *outside* the circle, at bottom of tile
+                        Text("Haptics at 27 • 54 • 80 • 108")
+                            .font(.caption2)
+                            .foregroundColor(.white.opacity(0.8))
                     }
+                    .padding(18)
                 }
-                .frame(height: 330)
-                .frame(maxWidth: .infinity)
                 .contentShape(Rectangle())
                 .onTapGesture {
                     handleTap()
                 }
-                Text(currentTransliteration)
-                    .font(.body)
-                    .foregroundColor(.white.opacity(0.9))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
-                    .fixedSize(horizontal: false, vertical: true)
-                //Spacer()
-                
-                // MARK: Reset
-                Button(action: {
-                    viewModel.reset()
-                    resetBeads()
-                }) {
-                    Text("Reset Count")
-                        .font(.subheadline.weight(.semibold))
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 10)
-                        .background(
-                            Capsule().fill(Color.white.opacity(0.15))
-                        )
-                        .overlay(
-                            Capsule().stroke(Color.white.opacity(0.35), lineWidth: 1)
-                        )
+
+
+                // MARK: Tile 3 – Mantra preview
+                VStack(alignment: .center, spacing: 10) {
+                    Text("Mantra Preview")
+                        .font(.headline)
                         .foregroundColor(.white)
-                }
 
-                // MARK: Quick Actions
-                HStack(spacing: 20) {
+                    Text(currentTransliteration.isEmpty ? "No mantra set" : currentTransliteration)
+                        .font(.footnote)
+                        .foregroundColor(.white)
+                    
+                    HStack(spacing: 12) {
+                        NavigationLink(
+                            destination: MantraPreviewView(
+                                mantra: Mantra(rawValue: selectedMantra) ?? .omNamahShivaya,
+                                customText: customMantraText
+                            )
+                        ) {
+                            Text("Preview Mantra")
+                                .modifier(CounterActionChip())
+                        }
 
-                    NavigationLink(destination:
-                        MantraPreviewView(
-                            mantra: Mantra(rawValue: selectedMantra) ?? .omNamahShivaya,
-                            customText: customMantraText
-                        )
-                    ) {
-                        Text("Preview Mantra")
-                            .font(.subheadline.weight(.semibold))
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
-                            .background(Color.white.opacity(0.18))
-                            .clipShape(Capsule())
-                            .foregroundColor(.white)
-                    }
-
-                    NavigationLink(destination: SettingsView()) {
-                        Text("Change Mantra")
-                            .font(.subheadline.weight(.semibold))
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
-                            .background(Color.white.opacity(0.18))
-                            .clipShape(Capsule())
-                            .foregroundColor(.white)
+                        NavigationLink(destination: SettingsView()) {
+                            Text("Change Mantra")
+                                .modifier(CounterActionChip())
+                        }
                     }
                 }
-                Text("Haptics at 27 • 54 • 80 • 108")
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.75))
-                .padding(.top, 4)
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .background(selectedTheme.background)
+                .cornerRadius(24)
+                .shadow(color: .black.opacity(0.10), radius: 10, y: 5)
 
-                Spacer(minLength: 30)
+                // MARK: Tile 4 – Buttons / actions (aligned)
+                VStack(spacing: 12) {
+                    HStack(spacing: 12) {
+                        Button(action: {
+                            viewModel.reset()
+                            resetBeads()
+                        }) {
+                            Text("Reset Count")
+                                .modifier(CounterActionChip())
+                        }
+                    }
+                }
+                .padding(16)
+                .background(selectedTheme.background)
+                .cornerRadius(24)
+                .shadow(color: .black.opacity(0.10), radius: 10, y: 5)
+
+                Spacer(minLength: 16)
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
         }
 
         // MARK: Sync target count with settings
@@ -320,14 +322,11 @@ struct CounterView: View {
 
     // MARK: - Tap Handling
 
-    /// Called when the user taps the main counter circle.
     func handleTap() {
-        // CASE 1: Word animation is OFF → direct count
         if !wordAnimationEnabled {
             viewModel.increment()
             updateBeadsAfterIncrement()
 
-            // Detect full 108-round completion
             if viewModel.count == 108 {
                 if UserDefaults.standard.bool(forKey: SettingsKeys.hapticsEnabled) {
                     HapticsManager.shared.finalTriplePulse()
@@ -341,7 +340,6 @@ struct CounterView: View {
             return
         }
 
-        // CASE 2: Word animation is ON → full mantra animation per tap
         guard !isAnimatingMantra else { return }
 
         isAnimatingMantra = true
@@ -366,7 +364,6 @@ struct CounterView: View {
             showWord = true
         }
 
-        // Word display duration
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
             withAnimation(.easeOut(duration: 0.25)) {
                 showWord = false
@@ -375,12 +372,10 @@ struct CounterView: View {
             currentWordIndex += 1
 
             if currentWordIndex >= total {
-                // Finished full mantra
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                     finishMantra()
                 }
             } else {
-                // Next word
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                     runMantraAnimation()
                 }
@@ -389,11 +384,9 @@ struct CounterView: View {
     }
 
     func finishMantra() {
-        // Full mantra completed once → count as 1
         viewModel.increment()
         updateBeadsAfterIncrement()
 
-        // If that takes us to 108 → one round complete
         if viewModel.count == 108 {
             viewModel.reset()
             resetBeads()
@@ -405,7 +398,6 @@ struct CounterView: View {
 
     // MARK: - Bead helpers
 
-    /// Sets beads[0...count-1] = true
     func syncBeadsWithCurrentCount() {
         var newStates = Array(repeating: false, count: 108)
         let capped = max(0, min(viewModel.count, 108))
@@ -419,7 +411,6 @@ struct CounterView: View {
         beadStates = newStates
     }
 
-    /// After incrementing count by 1, light up the new bead.
     func updateBeadsAfterIncrement() {
         let c = viewModel.count
         if c > 0 && c <= 108 {
@@ -432,12 +423,22 @@ struct CounterView: View {
     }
 }
 
-// MARK: - Preview
-
 struct CounterView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
             CounterView()
         }
+    }
+}
+
+private struct CounterActionChip: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .font(.subheadline.weight(.semibold))
+            .frame(maxWidth: .infinity, minHeight: 40)
+            .padding(.horizontal, 8)
+            .background(Color.white.opacity(0.20))
+            .clipShape(Capsule())
+            .foregroundColor(.white)
     }
 }

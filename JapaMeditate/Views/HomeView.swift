@@ -56,7 +56,7 @@ struct HomeView: View {
                             }
 
                             Text(greetingTitle())
-                                .font(.system(size: isCompact ? 24 : 28, weight: .bold))
+                                .font(.system(size: isCompact ? 18 : 20, weight: .bold))
                                 .foregroundColor(.white)
                                 .minimumScaleFactor(0.8)
 
@@ -300,7 +300,7 @@ struct AdBannerTile: View {
                 .font(.caption2)
                 .foregroundColor(.white.opacity(0.9))
 
-            StyledBanner()
+            BannerAdView()
                 .frame(maxWidth: .infinity)
         }
         .padding(12)
