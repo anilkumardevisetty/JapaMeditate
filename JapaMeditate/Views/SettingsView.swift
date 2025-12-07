@@ -14,6 +14,7 @@ struct SettingsView: View {
     @AppStorage(SettingsKeys.wordAnimationEnabled) private var wordAnimationEnabled: Bool = false
     @AppStorage("customMantraText") private var customMantraText: String = ""
     @AppStorage("selectedTheme") private var selectedTheme: AppTheme = .saffron
+    @AppStorage("userName") private var userName: String = ""
     
     @AppStorage(SettingsKeys.remindersEnabled) private var remindersEnabled: Bool = false
     @AppStorage(SettingsKeys.reminderTime) private var reminderTime: Double = 7 * 3600 // 7:00 AM
@@ -22,6 +23,10 @@ struct SettingsView: View {
         Form {
             var currentMantra: Mantra {
                 Mantra(rawValue: selectedMantra) ?? .omNamahShivaya
+            }
+            
+            Section(header: Text("Profile")) {
+                TextField("Your name", text: $userName)
             }
 
             // MARK: Mantra Section

@@ -13,8 +13,6 @@ struct ClockView: View {
 
     var body: some View {
         Text(formattedTime(now))
-            .font(.headline)
-            .foregroundColor(.white)
             .onReceive(timer) { value in
                 now = value
             }
@@ -22,7 +20,7 @@ struct ClockView: View {
 
     func formattedTime(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "EEE, MMM d • h:mm a"  // Example: Tue, Jan 14 • 7:42 PM
+        formatter.dateFormat = "h:mm a"  // Example: Tue, Jan 14 • 7:42 PM
         return formatter.string(from: date)
     }
 }
