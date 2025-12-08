@@ -30,13 +30,12 @@ struct StyledBanner: View {
     var body: some View {
         BannerAdView()
             .frame(maxWidth: .infinity)
-            .frame(height: 60)
+            .frame(height: 80)
             .padding(.horizontal, 16)
             .background(
                 RoundedRectangle(cornerRadius: 16)
                     .fill(selectedTheme.background)
                     .shadow(radius: 4)
             )
-            .padding(.horizontal)
     }
 }

@@ -125,9 +125,9 @@ struct HomeView: View {
                             }
 
                             HStack(spacing: 12) {
-                                HighlightStatCard(label: "Rounds Today", value: "\(todayRounds())")
-                                HighlightStatCard(label: "Meditation Minutes", value: "\(stats.lifetimeMeditationMinutes)")
-                                HighlightStatCard(label: "Japa Streak", value: "\(stats.currentStreak)d")
+                                HighlightStatCard(label: "Japa Rounds", value: "\(todayRounds())")
+                                HighlightStatCard(label: "Meditation Mins", value: "\(stats.lifetimeMeditationMinutes)")
+//                                HighlightStatCard(label: "Japa Streak", value: "\(stats.currentStreak)d")
                             }
                         }
                         .padding(16)
@@ -146,7 +146,6 @@ struct HomeView: View {
                                 .padding(.horizontal, 16)
                         }
 
-                        // MARK: Tools row
                         // MARK: Tools row (theme-colored tiles)
                         HStack(spacing: 12) {
                             NavigationLink(destination: ThemeView()) {
@@ -299,12 +298,13 @@ struct AdBannerTile: View {
             Text("Sponsored")
                 .font(.caption2)
                 .foregroundColor(.white.opacity(0.9))
-
+	
             BannerAdView()
                 .frame(maxWidth: .infinity)
         }
         .padding(12)
         .frame(maxWidth: .infinity)
+        .frame(height: 100)
         .background(background)
         .cornerRadius(20)
         .shadow(color: .black.opacity(0.10), radius: 12, y: 4)

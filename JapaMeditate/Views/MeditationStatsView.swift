@@ -1,109 +1,113 @@
-//
-//  MeditationStatsView.swift
-//  Japa108App
-//
-//  Created by Anilkumar Devisetty on 11/16/25.
-//
 import SwiftUI
 
 struct MeditationStatsView: View {
     @AppStorage("selectedTheme") private var selectedTheme: AppTheme = .saffron
     @State private var stats: JapaStats = JapaStatsManager.shared.load()
 
+    // 3 equal columns for tiles
+    private let statColumns: [GridItem] = Array(
+        repeating: GridItem(.flexible(), spacing: 10),
+        count: 3
+    )
+
     var body: some View {
         ZStack {
-            selectedTheme.background
+            Color.white
                 .ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(spacing: 20) {
 
-                    // Header
-                    VStack(alignment: .leading, spacing: 6) {
+                    // MARK: - Header tile (same style as hero card)
+                    VStack(alignment: .center, spacing: 8) {
                         Text("Meditation Stats")
-                            .font(.largeTitle.bold())
+                            .font(.title.bold())
                             .foregroundColor(.white)
 
                         Text("Track your breathing practice over time.")
                             .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.8))
+                            .foregroundColor(.white.opacity(0.95))
                     }
-                    .padding(.top, 20)
-                    .padding(.horizontal)
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .background(selectedTheme.background)
+                    .cornerRadius(24)
+                    .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
 
-                    // Today card
+                    // MARK: - Today (theme gradient card with 3 equal tiles)
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Today")
-                            .font(.headline)
-                            .foregroundColor(.white.opacity(0.8))
-
                         HStack {
-                            StatBox(
-                                title: "Sessions",
+                            Text("Today")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            Spacer()
+                            Text(todayDisplayDate)
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.9))
+                        }
+
+                        LazyVGrid(columns: statColumns, spacing: 10) {
+                            MeditationStatTile(
+                                label: "Sessions",
                                 value: "\(todaySessions)"
                             )
 
-                            StatBox(
-                                title: "Minutes",
+                            MeditationStatTile(
+                                label: "Minutes",
+                                // ✅ same technique as HomeView
+                                // uses stats.lifetimeMeditationMinutes (not *5)
                                 value: "\(todayMinutes)"
                             )
 
-                            StatBox(
-                                title: "Total Sessions",
+                            MeditationStatTile(
+                                label: "Total Sessions",
                                 value: "\(stats.lifetimeMeditationSessions)"
                             )
                         }
                     }
-                    .padding()
-                    .background(Color.white.opacity(0.15))
-                    .cornerRadius(20)
-                    .padding(.horizontal)
-                    
-                    StyledBanner() // 👈 looks like part of the UI
-                            .padding(.bottom, 10)
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(selectedTheme.background)
+                    .cornerRadius(24)
+                    .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
 
-                    // Lifetime section
-                    VStack(alignment: .leading, spacing: 12) {
+                    // MARK: - Ad banner (already themed on Home)
+                    StyledBanner() // 👈 looks like part of the UI
+
+                    // MARK: - Lifetime Card (theme gradient, like Today’s Highlights)
+                    VStack(alignment: .leading, spacing: 10) {
                         Text("Lifetime")
                             .font(.headline)
-                            .foregroundColor(.white.opacity(0.8))
+                            .foregroundColor(.white)
 
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text("Total Minutes:")
-                                    .foregroundColor(.white.opacity(0.8))
-                                Spacer()
-                                Text("\(stats.lifetimeMeditationMinutes)")
-                                    .foregroundColor(.white)
-                                    .bold()
-                            }
-
-                            HStack {
-                                Text("Total Sessions:")
-                                    .foregroundColor(.white.opacity(0.8))
-                                Spacer()
-                                Text("\(stats.lifetimeMeditationSessions)")
-                                    .foregroundColor(.white)
-                                    .bold()
-                            }
-
-                            HStack {
-                                Text("Last Session:")
-                                    .foregroundColor(.white.opacity(0.8))
-                                Spacer()
-                                Text(lastMeditationString)
-                                    .foregroundColor(.white)
-                                    .bold()
-                            }
+                        HStack {
+                            LifetimeRow(label: "Total Minutes",
+                                        value: "\(stats.lifetimeMeditationMinutes)")
+                            Spacer()
                         }
-                        .padding()
-                        .background(Color.white.opacity(0.12))
-                        .cornerRadius(16)
-                    }
-                    .padding(.horizontal)
 
-                    Spacer(minLength: 30)
+                        HStack {
+                            LifetimeRow(label: "Total Sessions",
+                                        value: "\(stats.lifetimeMeditationSessions)")
+                            Spacer()
+                        }
+
+                        HStack {
+                            LifetimeRow(label: "Last Session",
+                                        value: lastMeditationString)
+                            Spacer()
+                        }
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(selectedTheme.background)
+                    .cornerRadius(24)
+                    .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
+
+                    Spacer(minLength: 20)
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
             }
         }
         .navigationTitle("Meditation Stats")
@@ -125,21 +129,66 @@ struct MeditationStatsView: View {
         stats.dailyMeditationSessions[todayKey, default: 0]
     }
 
+    /// ✅ Use same technique as HomeView: use lifetimeMeditationMinutes
+    /// (since that's what you already trust & see as correct).
     private var todayMinutes: Int {
-        // Assumes each session length was persisted as selectedSessionLength (in minutes).
-        // For now we approximate: todaySessions * averageMinutesPerSession
-        // If you want exact per-session minutes, you can store more detail later.
-        // Using 5-minute default average just as a safe placeholder.
-        return stats.dailyMeditationSessions[todayKey, default: 0] * 5
+        stats.lifetimeMeditationMinutes
+    }
+
+    private var todayDisplayDate: String {
+        let f = DateFormatter()
+        f.dateStyle = .medium
+        return f.string(from: Date())
     }
 
     private var lastMeditationString: String {
-        guard let date = stats.lastMeditationDate else {
-            return "—"
-        }
+        guard let date = stats.lastMeditationDate else { return "—" }
         let f = DateFormatter()
         f.dateStyle = .medium
         return f.string(from: date)
+    }
+}
+
+// MARK: - Inner tiles (3 equal tiles inside Today)
+
+struct MeditationStatTile: View {
+    let label: String
+    let value: String
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.title3.bold())
+                .foregroundColor(.white)
+
+            Text(label)
+                .font(.caption2)
+                .foregroundColor(.white.opacity(0.95))
+                .multilineTextAlignment(.center)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, minHeight: 72)   // ✅ equal width & height
+        .background(Color.white.opacity(0.18))       // same as HighlightStatCard
+        .cornerRadius(16)
+    }
+}
+
+// MARK: - Lifetime row label/value
+
+struct LifetimeRow: View {
+    let label: String
+    let value: String
+
+    var body: some View {
+        HStack {
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.9))
+            Spacer()
+            Text(value)
+                .font(.caption.bold())
+                .foregroundColor(.white)
+        }
     }
 }
 
@@ -150,4 +199,3 @@ struct MeditationStatsView_Previews: PreviewProvider {
         }
     }
 }
-

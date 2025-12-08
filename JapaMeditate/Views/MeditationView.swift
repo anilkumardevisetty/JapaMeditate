@@ -19,8 +19,13 @@ struct MeditationView: View {
     @State private var cycleCount: Int = 0
     @State private var remainingSeconds: Int = 0
     @State private var meditationCompleted: Bool = false
+
+    // Session length picker
     @State private var showPicker: Bool = false
     @State private var selectedSessionLength: Int = 2
+
+    // To finish current breath cycle when time hits 0
+    @State private var shouldEndAtCycleCompletion: Bool = false
 
     // Breath timing (seconds)
     let inhaleDuration: Double = 4
@@ -38,154 +43,211 @@ struct MeditationView: View {
 
     var body: some View {
         ZStack {
-            selectedTheme.background.ignoresSafeArea()
-            
-            // MARK: Background ॐ
-            GeometryReader { geo in
-                Text("ॐ")
-                    .font(.system(size: geo.size.width * 0.3, weight: .bold))
-                    .foregroundColor(.white.opacity(0.1))
-                    .rotationEffect(.degrees(0))
-                    .position(
-                        x: geo.size.width / 2,
-                        y: geo.size.height * 0.52
-                    )
-            }
-            .allowsHitTesting(false)
+            // App background
+            Color.white
+                .ignoresSafeArea()
 
-            VStack(spacing: 25) {
+            VStack(spacing: 16) {
+                Spacer(minLength: 8)
 
-                // MARK: Title
-                Text("Meditation Mode")
-                    .font(.largeTitle.bold())
-                    .foregroundColor(.white)
-                    .padding(.top, 10)
-
-                Text("Breath In • Hold • Breath Out")
-                    .font(.title3)
-                    .foregroundColor(.white.opacity(0.8))
-
-                // MARK: Session Selector
-                VStack(spacing: 8) {
+                // MARK: Tile 1 – Intro
+                VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text("Session Length:")
-                            .foregroundColor(.white)
-                            .font(.headline)
+                        Text("MEDITATION MODE")
+                            .font(.caption2.smallCaps())
+                            .foregroundColor(.white.opacity(0.9))
 
                         Spacer()
 
-                        Button(action: { showPicker.toggle() }) {
-                            HStack {
+                        if isRunning {
+                            Text(formattedRemainingTime)
+                                .font(.caption.bold())
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(Color.white.opacity(0.2))
+                                .cornerRadius(12)
+                                .foregroundColor(.white)
+                        }
+                    }
+
+                    Text("Breathe with calm awareness.")
+                        .font(.title3.bold())
+                        .foregroundColor(.white)
+
+                    Text("Inhale • Hold • Exhale in a gentle guided rhythm.")
+                        .font(.footnote)
+                        .foregroundColor(.white.opacity(0.95))
+                }
+                .padding(16)
+                .background(selectedTheme.background)
+                .cornerRadius(24)
+                .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
+
+                // MARK: Tile 2 – Breath circle + ॐ + phase
+                ZStack {
+                    selectedTheme.background
+                        .cornerRadius(24)
+                        .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
+
+                    VStack(spacing: 12) {
+                        GeometryReader { geo in
+                            let size = min(geo.size.width, geo.size.height)
+
+                            ZStack {
+                                // ॐ watermark
+                                Text("ॐ")
+                                    .font(.system(size: size * 0.6, weight: .bold))
+                                    .foregroundColor(.white.opacity(0.08))
+
+                                // Soft breathing circle
+                                Circle()
+                                    .fill(Color.white.opacity(0.20))
+                                    .frame(width: size * 0.65, height: size * 0.65)
+                                    .scaleEffect(circleScale)
+                                    .animation(
+                                        .easeInOut(duration: animationDuration()),
+                                        value: circleScale
+                                    )
+
+                                VStack(spacing: 8) {
+                                    Text(phase.rawValue)
+                                        .font(.title2.bold())
+                                        .foregroundColor(.white)
+                                        .opacity(phase == .idle ? 0 : 1)
+
+                                    if isRunning {
+                                        Text("Cycles: \(cycleCount)")
+                                            .font(.headline)
+                                            .foregroundColor(.white.opacity(0.9))
+                                    } else if !meditationCompleted {
+                                        Text("Tap Start to begin guided breathing.")
+                                            .font(.footnote)
+                                            .foregroundColor(.white.opacity(0.9))
+                                            .multilineTextAlignment(.center)
+                                            .padding(.horizontal, 24)
+                                    }
+                                }
+                            }
+                            .frame(width: size, height: size)
+                            .position(x: geo.size.width / 2, y: geo.size.height / 2)
+                        }
+                        .frame(height: 260)
+                        .frame(maxWidth: .infinity)
+
+                        if isRunning {
+                            Text("Remaining \(formattedRemainingTime)")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.9))
+                        } else {
+                            Text("Screen will stay on during your session.")
+                                .font(.caption2)
+                                .foregroundColor(.white.opacity(0.8))
+                        }
+                    }
+                    .padding(18)
+                }
+
+                // MARK: Tile 3 – Session length selection
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Session Length")
+                                .font(.headline)
+                                .foregroundColor(.white)
+
+                            Text("Choose how long you’d like to meditate.")
+                                .font(.footnote)
+                                .foregroundColor(.white.opacity(0.9))
+                        }
+
+                        Spacer()
+
+                        Button(action: { showPicker = true }) {
+                            HStack(spacing: 6) {
                                 Text("\(selectedSessionLength) min")
-                                    .foregroundColor(.white)
+                                    .font(.subheadline.weight(.semibold))
                                 Image(systemName: "chevron.down")
-                                    .foregroundColor(.white.opacity(0.8))
+                                    .font(.caption)
                             }
                             .padding(.horizontal, 14)
                             .padding(.vertical, 8)
-                            .background(Color.white.opacity(0.15))
+                            .background(Color.white.opacity(0.18))
                             .clipShape(Capsule())
-                            .overlay(
-                                Capsule().stroke(Color.white.opacity(0.25), lineWidth: 1)
-                            )
+                            .foregroundColor(.white)
                         }
                     }
-                    .padding(.horizontal, 24)
+                }
+                .padding(16)
+                .background(selectedTheme.background)
+                .cornerRadius(24)
+                .shadow(color: .black.opacity(0.10), radius: 10, y: 5)
 
-                    // Dropdown
-                    if showPicker {
-                        VStack(spacing: 6) {
-                            ForEach(sessionOptions, id: \.self) { num in
-                                Button("\(num) min") {
-                                    selectedSessionLength = num
-                                    showPicker = false
-                                }
+                // MARK: Tile 4 – Controls
+                VStack(spacing: 12) {
+                    if !isRunning && !meditationCompleted {
+                        Button(action: startMeditation) {
+                            Text("Start Meditation")
+                                .modifier(MeditationPrimaryButton())
+                        }
+
+                    } else if isRunning {
+                        Button(action: stopMeditation) {
+                            Text("End Session")
+                                .modifier(MeditationPrimaryButton())
+                        }
+
+                    } else if meditationCompleted {
+                        VStack(spacing: 12) {
+                            Text("Session Complete")
+                                .font(.title3.bold())
                                 .foregroundColor(.white)
-                                .padding(.vertical, 6)
+
+                            StyledBanner()
+                                .padding(.bottom, 4)
+
+                            Button(action: { dismiss() }) {
+                                Text("Done")
+                                    .modifier(MeditationPrimaryButton())
                             }
                         }
-                        .padding(.horizontal, 24)
                     }
                 }
+                .padding(16)
+                .background(selectedTheme.background)
+                .cornerRadius(24)
+                .shadow(color: .black.opacity(0.10), radius: 10, y: 5)
 
-                // MARK: Remaining Time
-                if isRunning {
-                    Text("Remaining: \(formattedRemainingTime)")
-                        .font(.headline)
-                        .foregroundColor(.white.opacity(0.9))
-                }
-
-                Spacer()
-
-                // MARK: Main Circle + Phase Text + Counter
-                ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.20))
-                        .frame(width: 200, height: 200)
-                        .scaleEffect(circleScale)
-                        .animation(.easeInOut(duration: animationDuration()), value: circleScale)
-
-                    VStack(spacing: 6) {
-                        Text(phase.rawValue)
-                            .font(.title.bold())
-                            .foregroundColor(.white)
-                            .opacity(phase == .idle ? 0 : 1)
-
-                        if isRunning {
-                            Text("Cycles: \(cycleCount)")
-                                .font(.headline)
-                                .foregroundColor(.white.opacity(0.85))
-                        }
-                    }
-                }
-
-                Spacer()
-
-                // MARK: Start / End / Completed Buttons
-                if !isRunning && !meditationCompleted {
-                    Button(action: startMeditation) {
-                        Text("Start")
-                            .font(.title3.bold())
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 40)
-                            .padding(.vertical, 14)
-                            .background(Color.blue.opacity(0.8))
-                            .clipShape(Capsule())
-                    }
-
-                } else if isRunning {
-                    Button(action: stopMeditation) {
-                        Text("End")
-                            .font(.title3.bold())
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 40)
-                            .padding(.vertical, 14)
-                            .background(Color.red.opacity(0.8))
-                            .clipShape(Capsule())
-                    }
-
-                } else if meditationCompleted {
-                    VStack(spacing: 12) {
-                        Text("Session Complete")
-                            .font(.title.bold())
-                            .foregroundColor(.white)
-                        
-                        StyledBanner()
-                                .padding(.bottom, 10)
-
-                        Button("Done") {
-                            dismiss()
-                        }
-                        .font(.title3.bold())
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 40)
-                        .padding(.vertical, 12)
-                        .background(Color.green.opacity(0.8))
-                        .clipShape(Capsule())
-                    }
-                }
-                Spacer(minLength: 40)
+                Spacer(minLength: 16)
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+        }
+        // Wheel-style picker sheet
+        .sheet(isPresented: $showPicker) {
+            VStack(spacing: 16) {
+                Text("Session Length")
+                    .font(.headline)
+                    .padding(.top, 16)
+
+                Picker("Session Length", selection: $selectedSessionLength) {
+                    ForEach(sessionOptions, id: \.self) { num in
+                        Text("\(num) minutes")
+                            .tag(num)
+                    }
+                }
+                .pickerStyle(.wheel)          // iOS clock-style
+                .labelsHidden()
+                .frame(maxHeight: 200)
+
+                Button("Done") {
+                    showPicker = false
+                }
+                .font(.headline)
+                .padding(.vertical, 8)
+            }
+            .padding(.horizontal, 24)
+            .presentationDetents([.fraction(0.4)])
+            .presentationDragIndicator(.visible)
         }
         .onAppear {
             UIApplication.shared.isIdleTimerDisabled = true
@@ -211,6 +273,7 @@ struct MeditationView: View {
         cycleCount = 0
         meditationCompleted = false
         remainingSeconds = selectedSessionLength * 60
+        shouldEndAtCycleCompletion = false
 
         isRunning = true
 
@@ -237,12 +300,11 @@ struct MeditationView: View {
             remainingSeconds -= 1
 
             if remainingSeconds <= 0 {
-                meditationCompleted = true
-                stopMeditation()
-                recordCompletedMeditationSession()
+                // Time is up → let current breath cycle finish,
+                // then we'll end at the end of exhale.
+                shouldEndAtCycleCompletion = true
                 return
             }
-
 
             countdownTimer()
         }
@@ -253,7 +315,6 @@ struct MeditationView: View {
     func recordCompletedMeditationSession() {
         var stats = JapaStatsManager.shared.load()
 
-        // date key like "2025-11-16"
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
         let today = f.string(from: Date())
@@ -265,14 +326,6 @@ struct MeditationView: View {
 
         JapaStatsManager.shared.save(stats)
     }
-
-    
-    func formattedDate(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        return f.string(from: date)
-    }
-
 
     // MARK: - Breathing Logic
     func runBreathingCycle() {
@@ -305,9 +358,30 @@ struct MeditationView: View {
                     MeditationHapticsManager.shared.stopContinuous()
                     cycleCount += 1
 
-                    runBreathingCycle()
+                    // If time has finished, end gracefully at end of this cycle
+                    if shouldEndAtCycleCompletion || remainingSeconds <= 0 {
+                        meditationCompleted = true
+                        stopMeditation()
+                        recordCompletedMeditationSession()
+                    } else {
+                        runBreathingCycle()
+                    }
                 }
             }
         }
+    }
+}
+
+// MARK: - Button style
+
+private struct MeditationPrimaryButton: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .font(.subheadline.weight(.semibold))
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .padding(.horizontal, 8)
+            .background(Color.white.opacity(0.20))
+            .clipShape(Capsule())
+            .foregroundColor(.white)
     }
 }
