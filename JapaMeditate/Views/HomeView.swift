@@ -139,7 +139,7 @@ struct HomeView: View {
                         if !motivation.isEmpty {
                             Text("“\(motivation)”")
                                 .font(.footnote)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.black)
                                 .multilineTextAlignment(.center)
                                 .lineLimit(2)
                                 .minimumScaleFactor(0.7)
@@ -171,7 +171,7 @@ struct HomeView: View {
 
                         Text("“Chanting purifies the mind & uplifts the soul.”")
                             .font(.footnote)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.black)
                             .multilineTextAlignment(.center)
                             .padding(.bottom, 12)
                     }
@@ -310,5 +310,3 @@ struct AdBannerTile: View {
         .shadow(color: .black.opacity(0.10), radius: 12, y: 4)
     }
 }
-
-

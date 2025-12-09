@@ -33,7 +33,7 @@ struct MeditationView: View {
     let exhaleDuration: Double = 4
 
     // Minutes options: 2 → 20 mins
-    let sessionOptions = Array(stride(from: 2, through: 20, by: 2))
+    let sessionOptions = Array(stride(from: 1, through: 20, by: 1))
 
     var formattedRemainingTime: String {
         let m = remainingSeconds / 60
@@ -216,6 +216,11 @@ struct MeditationView: View {
                 .background(selectedTheme.background)
                 .cornerRadius(24)
                 .shadow(color: .black.opacity(0.10), radius: 10, y: 5)
+                .onChange(of: meditationCompleted) { newValue in
+                    if newValue == true {
+                        playCompletionHaptics()
+                    }
+                }
 
                 Spacer(minLength: 16)
             }
@@ -371,6 +376,20 @@ struct MeditationView: View {
         }
     }
 }
+
+private func playCompletionHaptics() {
+    Task { @MainActor in
+        let generator = UIImpactFeedbackGenerator(style: .rigid)
+        generator.prepare()
+
+        // 10 short pulses
+        for _ in 0..<10 {
+            generator.impactOccurred()
+            try? await Task.sleep(nanoseconds: 150_000_000) // 0.15 sec between pulses
+        }
+    }
+}
+
 
 // MARK: - Button style
 
