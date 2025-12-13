@@ -21,7 +21,6 @@ struct MeditationStatsView: View {
                         todayCard
                         StyledBanner()
                         lifetimeCard
-                        Spacer(minLength: 8)
                     }
                 }
                 .padding(.top, 8)
