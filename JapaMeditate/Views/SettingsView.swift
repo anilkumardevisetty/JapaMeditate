@@ -4,6 +4,7 @@
 //
 //  Created by Anilkumar Devisetty on 11/15/25.
 //
+
 import SwiftUI
 
 struct SettingsView: View {
@@ -15,36 +16,36 @@ struct SettingsView: View {
     @AppStorage("customMantraText") private var customMantraText: String = ""
     @AppStorage("selectedTheme") private var selectedTheme: AppTheme = .saffron
     @AppStorage("userName") private var userName: String = ""
-    
-    @AppStorage(SettingsKeys.remindersEnabled) private var remindersEnabled: Bool = false
-    @AppStorage(SettingsKeys.reminderTime) private var reminderTime: Double = 7 * 3600 // 7:00 AM
+
+    // Defaults: ON + 6:00 PM
+    @AppStorage(SettingsKeys.remindersEnabled) private var remindersEnabled: Bool = true
+    // Store as seconds since midnight (local time)
+    @AppStorage(SettingsKeys.reminderTime) private var reminderTime: Double = 18 * 3600
 
     var body: some View {
         Form {
             var currentMantra: Mantra {
                 Mantra(rawValue: selectedMantra) ?? .omNamahShivaya
             }
-            
+
+            // MARK: Profile
             Section(header: Text("Profile")) {
                 TextField("Your name", text: $userName)
             }
 
-            // MARK: Mantra Section
+            // MARK: Mantra
             Section(header: Text("Mantra")) {
-
                 Picker("Select Mantra", selection: $selectedMantra) {
                     ForEach(Mantra.allCases) { mantra in
                         Text(mantra.title).tag(mantra.rawValue)
                     }
                 }
 
-                // Custom mantra input
                 if selectedMantra == Mantra.custom.rawValue {
                     TextField("Enter custom mantra", text: $customMantraText)
                         .textFieldStyle(.roundedBorder)
                 }
 
-                // Preview button
                 NavigationLink("Preview Mantra") {
                     MantraPreviewView(
                         mantra: currentMantra,
@@ -52,25 +53,14 @@ struct SettingsView: View {
                     )
                 }
             }
-            
-            // MARK: Target Count Section
-//            Section(header: Text("Target Count")) {
-//                Picker("Repeats per round", selection: $targetCount) {
-//                    Text("108").tag(108)
-//                    Text("54").tag(54)
-//                    Text("27").tag(27)
-//                    Text("1008").tag(1008)
-//                }
-//                .pickerStyle(.segmented)
-//            }
 
-            // MARK: Vibration & Auto Reset
+            // MARK: Behavior
             Section(header: Text("Behavior")) {
                 Toggle("Haptics Enabled", isOn: $hapticsEnabled)
                 Toggle("Auto Reset After Completion", isOn: $autoReset)
                 Toggle("Word Animation", isOn: $wordAnimationEnabled)
             }
-            
+
             // MARK: Themes
             Section {
                 NavigationLink(destination: ThemeView()) {
@@ -83,20 +73,29 @@ struct SettingsView: View {
                     }
                 }
             }
-            
-            //MARK: Notifications
+
+            // MARK: Daily Reminder
             Section(header: Text("Daily Reminder")) {
 
                 Toggle("Enable Daily Reminder", isOn: $remindersEnabled)
                     .onChange(of: remindersEnabled) { enabled in
                         if enabled {
-                            NotificationManager.shared.requestPermission()
+                            NotificationManager.shared.requestPermission { granted in
+                                guard granted else {
+                                    // If denied, flip toggle back off (avoids confusion)
+                                    DispatchQueue.main.async {
+                                        remindersEnabled = false
+                                    }
+                                    return
+                                }
 
-                            let date = Date(timeIntervalSince1970: reminderTime)
-                            let comps = Calendar.current.dateComponents([.hour, .minute], from: date)
-                            
-                            if let hour = comps.hour, let minute = comps.minute {
-                                NotificationManager.shared.scheduleDailyReminder(hour: hour, minute: minute)
+                                let date = dateFromSecondsSinceMidnight(reminderTime)
+                                let comps = Calendar.current.dateComponents([.hour, .minute], from: date)
+
+                                NotificationManager.shared.scheduleDailyReminder(
+                                    hour: comps.hour ?? 18,
+                                    minute: comps.minute ?? 0
+                                )
                             }
                         } else {
                             NotificationManager.shared.cancelDailyReminder()
@@ -107,22 +106,40 @@ struct SettingsView: View {
                     DatePicker(
                         "Reminder Time",
                         selection: Binding(
-                            get: { Date(timeIntervalSince1970: reminderTime) },
+                            get: { dateFromSecondsSinceMidnight(reminderTime) },
                             set: { newValue in
-                                reminderTime = newValue.timeIntervalSince1970
+                                reminderTime = secondsSinceMidnight(from: newValue)
                                 let comps = Calendar.current.dateComponents([.hour, .minute], from: newValue)
+
                                 NotificationManager.shared.scheduleDailyReminder(
-                                    hour: comps.hour ?? 7,
+                                    hour: comps.hour ?? 18,
                                     minute: comps.minute ?? 0
                                 )
                             }
                         ),
                         displayedComponents: .hourAndMinute
                     )
+                } else {
+                    Text("If reminders don’t work, enable notifications in iPhone Settings → Notifications → JapaMeditate.")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 4)
                 }
             }
-
         }
         .navigationTitle("Settings")
+    }
+
+    // MARK: - Time Helpers (seconds since midnight <-> Date)
+    private func dateFromSecondsSinceMidnight(_ seconds: Double) -> Date {
+        let cal = Calendar.current
+        let startOfDay = cal.startOfDay(for: Date())
+        return startOfDay.addingTimeInterval(seconds)
+    }
+
+    private func secondsSinceMidnight(from date: Date) -> Double {
+        let cal = Calendar.current
+        let comps = cal.dateComponents([.hour, .minute], from: date)
+        return Double((comps.hour ?? 0) * 3600 + (comps.minute ?? 0) * 60)
     }
 }

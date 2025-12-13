@@ -1,21 +1,39 @@
-//
-//  Japa108AppApp.swift
-//  Japa108App
-//
-//  Created by Anilkumar Devisetty on 11/15/25.
-// This is a git test.
-
 import SwiftUI
 import UserNotifications
 
 @main
 struct JapaMeditateApp: App {
+
+    @AppStorage("didRequestNotificationPermission") private var didRequestNotificationPermission: Bool = false
+
+    // Defaults: ON + 6 PM
+    @AppStorage(SettingsKeys.remindersEnabled) private var remindersEnabled: Bool = true
+    @AppStorage(SettingsKeys.reminderTime) private var reminderTime: Double = 18 * 3600
+
     var body: some Scene {
         WindowGroup {
             NavigationStack {
                 HomeView()
             }
+            .onAppear {
+                handleFirstLaunchNotifications()
+            }
+        }
+    }
+
+    private func handleFirstLaunchNotifications() {
+        guard !didRequestNotificationPermission else { return }
+        didRequestNotificationPermission = true
+
+        // Set defaults on first run
+        remindersEnabled = true
+        reminderTime = 18 * 3600
+
+        // Ask permission, then schedule only if granted AND remindersEnabled
+        NotificationManager.shared.requestPermission { granted in
+            guard granted else { return }
+            guard remindersEnabled else { return }
+            NotificationManager.shared.scheduleDailyReminder(hour: 18, minute: 0)
         }
     }
 }
-
