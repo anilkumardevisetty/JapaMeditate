@@ -12,102 +12,20 @@ struct MeditationStatsView: View {
 
     var body: some View {
         ZStack {
-            Color.white
-                .ignoresSafeArea()
+            Color.white.ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 20) {
-
-                    // MARK: - Header tile (same style as hero card)
-                    VStack(alignment: .center, spacing: 8) {
-                        Text("Meditation Stats")
-                            .font(.title.bold())
-                            .foregroundColor(.white)
-
-                        Text("Track your breathing practice over time.")
-                            .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.95))
+                AppPanel {
+                    VStack(spacing: 16) {
+                        headerTile
+                        todayCard
+                        StyledBanner()
+                        lifetimeCard
+                        Spacer(minLength: 8)
                     }
-                    .padding(16)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .background(selectedTheme.background)
-                    .cornerRadius(24)
-                    .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
-
-                    // MARK: - Today (theme gradient card with 3 equal tiles)
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Text("Today")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                            Spacer()
-                            Text(todayDisplayDate)
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.9))
-                        }
-
-                        LazyVGrid(columns: statColumns, spacing: 10) {
-                            MeditationStatTile(
-                                label: "Sessions",
-                                value: "\(todaySessions)"
-                            )
-
-                            MeditationStatTile(
-                                label: "Minutes",
-                                // ✅ same technique as HomeView
-                                // uses stats.lifetimeMeditationMinutes (not *5)
-                                value: "\(todayMinutes)"
-                            )
-
-                            MeditationStatTile(
-                                label: "Total Sessions",
-                                value: "\(stats.lifetimeMeditationSessions)"
-                            )
-                        }
-                    }
-                    .padding(16)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(selectedTheme.background)
-                    .cornerRadius(24)
-                    .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
-
-                    // MARK: - Ad banner (already themed on Home)
-                    StyledBanner() // 👈 looks like part of the UI
-
-                    // MARK: - Lifetime Card (theme gradient, like Today’s Highlights)
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Lifetime")
-                            .font(.headline)
-                            .foregroundColor(.white)
-
-                        HStack {
-                            LifetimeRow(label: "Total Minutes",
-                                        value: "\(stats.lifetimeMeditationMinutes)")
-                            Spacer()
-                        }
-
-                        HStack {
-                            LifetimeRow(label: "Total Sessions",
-                                        value: "\(stats.lifetimeMeditationSessions)")
-                            Spacer()
-                        }
-
-                        HStack {
-                            LifetimeRow(label: "Last Session",
-                                        value: lastMeditationString)
-                            Spacer()
-                        }
-                    }
-                    .padding(16)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(selectedTheme.background)
-                    .cornerRadius(24)
-                    .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
-
-                    Spacer(minLength: 20)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
+                .padding(.top, 8)
+                .padding(.bottom, 8)
             }
         }
         .navigationTitle("Meditation Stats")
@@ -116,32 +34,99 @@ struct MeditationStatsView: View {
             stats = JapaStatsManager.shared.load()
         }
     }
+}
 
-    // MARK: - Helpers
+// MARK: - Sections
+private extension MeditationStatsView {
 
-    private var todayKey: String {
+    var headerTile: some View {
+        VStack(alignment: .center, spacing: 8) {
+            Text("Meditation Stats")
+                .font(.title.bold())
+                .foregroundColor(.white)
+
+            Text("Track your breathing practice over time.")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.95))
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .center)
+        .background(selectedTheme.background)
+        .cornerRadius(24)
+        .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
+    }
+
+    var todayCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Today")
+                    .font(.headline)
+                    .foregroundColor(.white)
+
+                Spacer()
+
+                Text(todayDisplayDate)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.9))
+            }
+
+            LazyVGrid(columns: statColumns, spacing: 10) {
+                MeditationStatTile(label: "Sessions", value: "\(todaySessions)")
+                MeditationStatTile(label: "Minutes", value: "\(todayMinutes)")
+                MeditationStatTile(label: "Total Sessions", value: "\(stats.lifetimeMeditationSessions)")
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(selectedTheme.background)
+        .cornerRadius(24)
+        .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
+    }
+
+    var lifetimeCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Lifetime")
+                .font(.headline)
+                .foregroundColor(.white)
+
+            LifetimeRow(label: "Total Minutes", value: "\(stats.lifetimeMeditationMinutes)")
+            LifetimeRow(label: "Total Sessions", value: "\(stats.lifetimeMeditationSessions)")
+            LifetimeRow(label: "Last Session", value: lastMeditationString)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(selectedTheme.background)
+        .cornerRadius(24)
+        .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
+    }
+}
+
+// MARK: - Helpers
+private extension MeditationStatsView {
+
+    var todayKey: String {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
         return f.string(from: Date())
     }
 
-    private var todaySessions: Int {
+    var todaySessions: Int {
         stats.dailyMeditationSessions[todayKey, default: 0]
     }
 
-    /// ✅ Use same technique as HomeView: use lifetimeMeditationMinutes
-    /// (since that's what you already trust & see as correct).
-    private var todayMinutes: Int {
+    /// Note: you currently store lifetimeMeditationMinutes, not per-day minutes.
+    /// So this reflects the same value you showed on HomeView.
+    var todayMinutes: Int {
         stats.lifetimeMeditationMinutes
     }
 
-    private var todayDisplayDate: String {
+    var todayDisplayDate: String {
         let f = DateFormatter()
         f.dateStyle = .medium
         return f.string(from: Date())
     }
 
-    private var lastMeditationString: String {
+    var lastMeditationString: String {
         guard let date = stats.lastMeditationDate else { return "—" }
         let f = DateFormatter()
         f.dateStyle = .medium
@@ -150,7 +135,6 @@ struct MeditationStatsView: View {
 }
 
 // MARK: - Inner tiles (3 equal tiles inside Today)
-
 struct MeditationStatTile: View {
     let label: String
     let value: String
@@ -167,14 +151,13 @@ struct MeditationStatTile: View {
                 .multilineTextAlignment(.center)
         }
         .padding(10)
-        .frame(maxWidth: .infinity, minHeight: 72)   // ✅ equal width & height
-        .background(Color.white.opacity(0.18))       // same as HighlightStatCard
+        .frame(maxWidth: .infinity, minHeight: 72)
+        .background(Color.white.opacity(0.18))
         .cornerRadius(16)
     }
 }
 
 // MARK: - Lifetime row label/value
-
 struct LifetimeRow: View {
     let label: String
     let value: String

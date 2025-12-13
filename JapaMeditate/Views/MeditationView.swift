@@ -175,32 +175,28 @@ struct MeditationView: View {
                 )
         }
     }
+    
     private var contentContainer: some View {
-        VStack(spacing: 16) {
-            Spacer(minLength: 8)
-
-            headerTile
-            breathingTile
-            controlTile
-            patternTile
-
-            Spacer(minLength: 16)
+        AppPanel {
+            VStack(spacing: 16) {
+                headerTile
+                breathingTile
+                controlTile
+                patternTile
+            }
         }
-        .padding(14)
-        .background(
-            // Outer “panel” that holds all tiles
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.12), radius: 18, y: 10)    // depth
-                .overlay(
-                    // Subtle outline
-                    RoundedRectangle(cornerRadius: 32, style: .continuous)
-                        .stroke(Color.black.opacity(0.06), lineWidth: 1)
-                )
-        )
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
     }
+
+    private var containerBackground: some View {
+        RoundedRectangle(cornerRadius: 32, style: .continuous)
+            .fill(Color.white)  // or Color(.systemBackground)
+    }
+
+    private var containerStroke: some View {
+        RoundedRectangle(cornerRadius: 32, style: .continuous)
+            .stroke(Color.black.opacity(0.06), lineWidth: 1)
+    }
+
 
 }
 
