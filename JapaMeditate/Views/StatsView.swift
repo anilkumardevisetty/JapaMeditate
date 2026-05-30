@@ -32,6 +32,8 @@ struct StatsView: View {
                     VStack(spacing: 16) {
                         headerTile
                         todayCard
+                        practiceCalendarCard
+                        insightsCard
                         StyledBanner()
                         lifetimeCard
                     }
@@ -111,6 +113,29 @@ private extension StatsView {
         .background(selectedTheme.background)
         .cornerRadius(24)
         .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
+    }
+
+    var practiceCalendarCard: some View {
+        PracticeCalendarCard(
+            title: "Last 30 Days",
+            valuesByDate: stats.dailyRounds,
+            metricName: "round",
+            metricPluralName: "rounds",
+            theme: selectedTheme
+        )
+    }
+
+    var insightsCard: some View {
+        PracticeInsightsCard(
+            valuesByDate: stats.dailyRounds,
+            metricName: "round",
+            metricPluralName: "rounds",
+            bestDayLabel: "Best day",
+            averageLabel: "Daily average",
+            consistencyLabel: "Consistency",
+            emptyMessage: "Complete a round to unlock your first Japa insight.",
+            theme: selectedTheme
+        )
     }
 }
 

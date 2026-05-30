@@ -19,6 +19,8 @@ struct MeditationStatsView: View {
                     VStack(spacing: 16) {
                         headerTile
                         todayCard
+                        practiceCalendarCard
+                        insightsCard
                         StyledBanner()
                         lifetimeCard
                     }
@@ -98,6 +100,30 @@ private extension MeditationStatsView {
         .cornerRadius(24)
         .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
     }
+
+    var practiceCalendarCard: some View {
+        PracticeCalendarCard(
+            title: "Last 30 Days",
+            valuesByDate: stats.dailyMeditationMinutes,
+            metricName: "minute",
+            metricPluralName: "minutes",
+            theme: selectedTheme,
+            intensityLevel: meditationIntensityLevel
+        )
+    }
+
+    var insightsCard: some View {
+        PracticeInsightsCard(
+            valuesByDate: stats.dailyMeditationMinutes,
+            metricName: "minute",
+            metricPluralName: "minutes",
+            bestDayLabel: "Longest day",
+            averageLabel: "Daily average",
+            consistencyLabel: "Consistency",
+            emptyMessage: "Finish a meditation session to unlock your first meditation insight.",
+            theme: selectedTheme
+        )
+    }
 }
 
 // MARK: - Helpers
@@ -128,6 +154,19 @@ private extension MeditationStatsView {
         let f = DateFormatter()
         f.dateStyle = .medium
         return f.string(from: date)
+    }
+
+    func meditationIntensityLevel(minutes: Int) -> Int {
+        switch minutes {
+        case 0:
+            return 0
+        case 1..<10:
+            return 1
+        case 10..<20:
+            return 2
+        default:
+            return 3
+        }
     }
 }
 
