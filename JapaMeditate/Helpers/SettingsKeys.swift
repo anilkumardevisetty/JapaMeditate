@@ -5,6 +5,11 @@
 //  Created by Anilkumar Devisetty on 11/15/25.
 //
 enum SettingsKeys {
+    static let didCompleteOnboarding = "didCompleteOnboarding"
+    static let didRequestNotificationPermission = "didRequestNotificationPermission"
+    static let userName = "userName"
+    static let intention = "practiceIntention"
+
     static let mantra = "mantraText"
     static let customMantra = "customMantraText"
     
