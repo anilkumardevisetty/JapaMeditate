@@ -1,5 +1,6 @@
 import SwiftUI
 import UserNotifications
+import GoogleMobileAds
 
 @main
 struct JapaMeditateApp: App {
@@ -9,6 +10,10 @@ struct JapaMeditateApp: App {
     // Defaults: ON + 6 PM
     @AppStorage(SettingsKeys.remindersEnabled) private var remindersEnabled: Bool = true
     @AppStorage(SettingsKeys.reminderTime) private var reminderTime: Double = 18 * 3600
+
+    init() {
+        MobileAds.shared.start()
+    }
 
     var body: some Scene {
         WindowGroup {

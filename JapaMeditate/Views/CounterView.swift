@@ -140,7 +140,7 @@ private extension CounterView {
 
                 counterCircle
 
-                Text("Haptics at 27 • 54 • 80 • 108")
+                Text("Haptics at 27 • 54 • 80 • Completion")
                     .font(.caption2)
                     .foregroundColor(.white.opacity(0.8))
             }
@@ -272,7 +272,7 @@ private extension CounterView {
                     .font(.largeTitle.bold())
                     .foregroundColor(.white)
 
-                Text("You completed 108 chants.\nMay peace and blessings be with you.")
+                Text("You completed \(viewModel.total) chants.\nMay peace and blessings be with you.")
                     .font(.headline)
                     .foregroundColor(.white.opacity(0.95))
                     .multilineTextAlignment(.center)
@@ -334,15 +334,6 @@ private extension CounterView {
         if !wordAnimationEnabled {
             viewModel.increment()
             updateBeadsAfterIncrement()
-
-            if viewModel.count == 108 {
-                if UserDefaults.standard.bool(forKey: SettingsKeys.hapticsEnabled) {
-                    HapticsManager.shared.finalTriplePulse()
-                }
-                viewModel.reset()
-                resetBeads()
-                viewModel.completeOneRound()
-            }
             return
         }
 
@@ -389,12 +380,6 @@ private extension CounterView {
     func finishMantra() {
         viewModel.increment()
         updateBeadsAfterIncrement()
-
-        if viewModel.count == 108 {
-            viewModel.reset()
-            resetBeads()
-            viewModel.completeOneRound()
-        }
 
         isAnimatingMantra = false
     }

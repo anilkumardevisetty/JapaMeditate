@@ -113,10 +113,8 @@ private extension MeditationStatsView {
         stats.dailyMeditationSessions[todayKey, default: 0]
     }
 
-    /// Note: you currently store lifetimeMeditationMinutes, not per-day minutes.
-    /// So this reflects the same value you showed on HomeView.
     var todayMinutes: Int {
-        stats.lifetimeMeditationMinutes
+        stats.dailyMeditationMinutes[todayKey, default: 0]
     }
 
     var todayDisplayDate: String {

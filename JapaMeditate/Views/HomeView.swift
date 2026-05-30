@@ -153,7 +153,7 @@ private extension HomeView {
 
             HStack(spacing: 12) {
                 HighlightStatCard(label: "Japa Rounds", value: "\(todayRounds())")
-                HighlightStatCard(label: "Meditation Mins", value: "\(stats.lifetimeMeditationMinutes)")
+                HighlightStatCard(label: "Meditation Mins", value: "\(todayMeditationMinutes())")
             }
         }
         .padding(16)
@@ -215,6 +215,11 @@ private extension HomeView {
     func todayRounds() -> Int {
         let today = formattedDate(Date())
         return stats.dailyRounds[today, default: 0]
+    }
+
+    func todayMeditationMinutes() -> Int {
+        let today = formattedDate(Date())
+        return stats.dailyMeditationMinutes[today, default: 0]
     }
 
     func formattedDate(_ date: Date) -> String {
