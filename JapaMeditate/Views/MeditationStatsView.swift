@@ -21,6 +21,7 @@ struct MeditationStatsView: View {
                         todayCard
                         practiceCalendarCard
                         insightsCard
+                        milestonesCard
                         StyledBanner()
                         lifetimeCard
                     }
@@ -124,6 +125,14 @@ private extension MeditationStatsView {
             theme: selectedTheme
         )
     }
+
+    var milestonesCard: some View {
+        MilestoneBadgesCard(
+            title: "Milestones",
+            milestones: meditationMilestones,
+            theme: selectedTheme
+        )
+    }
 }
 
 // MARK: - Helpers
@@ -167,6 +176,43 @@ private extension MeditationStatsView {
         default:
             return 3
         }
+    }
+
+    var meditationMilestones: [PracticeMilestone] {
+        [
+            PracticeMilestone(
+                id: "first-session",
+                title: "First Session",
+                subtitle: stats.lifetimeMeditationSessions >= 1 ? "You created space to sit" : "Complete 1 session",
+                systemImage: "play.circle.fill",
+                isUnlocked: stats.lifetimeMeditationSessions >= 1
+            ),
+            PracticeMilestone(
+                id: "seven-active-days",
+                title: "7 Active Days",
+                subtitle: "\(activeMeditationDays) days recorded",
+                systemImage: "calendar.badge.checkmark",
+                isUnlocked: activeMeditationDays >= 7
+            ),
+            PracticeMilestone(
+                id: "hundred-minutes",
+                title: "100 Minutes",
+                subtitle: "\(stats.lifetimeMeditationMinutes) lifetime minutes",
+                systemImage: "clock.fill",
+                isUnlocked: stats.lifetimeMeditationMinutes >= 100
+            ),
+            PracticeMilestone(
+                id: "ten-sessions",
+                title: "10 Sessions",
+                subtitle: "\(stats.lifetimeMeditationSessions) sessions completed",
+                systemImage: "leaf.fill",
+                isUnlocked: stats.lifetimeMeditationSessions >= 10
+            )
+        ]
+    }
+
+    var activeMeditationDays: Int {
+        stats.dailyMeditationMinutes.values.filter { $0 > 0 }.count
     }
 }
 

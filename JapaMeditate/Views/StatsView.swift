@@ -34,6 +34,7 @@ struct StatsView: View {
                         todayCard
                         practiceCalendarCard
                         insightsCard
+                        milestonesCard
                         StyledBanner()
                         lifetimeCard
                     }
@@ -137,6 +138,14 @@ private extension StatsView {
             theme: selectedTheme
         )
     }
+
+    var milestonesCard: some View {
+        MilestoneBadgesCard(
+            title: "Milestones",
+            milestones: japaMilestones,
+            theme: selectedTheme
+        )
+    }
 }
 
 // MARK: - Helpers
@@ -156,6 +165,43 @@ private extension StatsView {
         let f = DateFormatter()
         f.dateStyle = .medium
         return f.string(from: Date())
+    }
+
+    var japaMilestones: [PracticeMilestone] {
+        [
+            PracticeMilestone(
+                id: "first-round",
+                title: "First Round",
+                subtitle: stats.lifetimeRounds >= 1 ? "Your practice has begun" : "Complete 1 round",
+                systemImage: "circle.circle.fill",
+                isUnlocked: stats.lifetimeRounds >= 1
+            ),
+            PracticeMilestone(
+                id: "seven-active-days",
+                title: "7 Active Days",
+                subtitle: "\(activeJapaDays) days recorded",
+                systemImage: "calendar.badge.checkmark",
+                isUnlocked: activeJapaDays >= 7
+            ),
+            PracticeMilestone(
+                id: "one-oh-eight-rounds",
+                title: "108 Rounds",
+                subtitle: "\(stats.lifetimeRounds) lifetime rounds",
+                systemImage: "sparkles",
+                isUnlocked: stats.lifetimeRounds >= 108
+            ),
+            PracticeMilestone(
+                id: "week-streak",
+                title: "7 Day Streak",
+                subtitle: "Best streak: \(stats.bestStreak)d",
+                systemImage: "flame.fill",
+                isUnlocked: stats.bestStreak >= 7
+            )
+        ]
+    }
+
+    var activeJapaDays: Int {
+        stats.dailyRounds.values.filter { $0 > 0 }.count
     }
 }
 
