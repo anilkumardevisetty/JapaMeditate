@@ -19,6 +19,7 @@ struct MeditationStatsView: View {
                     VStack(spacing: 16) {
                         headerTile
                         todayCard
+                        weeklySummaryCard
                         practiceCalendarCard
                         insightsCard
                         milestonesCard
@@ -110,6 +111,15 @@ private extension MeditationStatsView {
             metricPluralName: "minutes",
             theme: selectedTheme,
             intensityLevel: meditationIntensityLevel
+        )
+    }
+
+    var weeklySummaryCard: some View {
+        WeeklySummaryCard(
+            valuesByDate: stats.dailyMeditationMinutes,
+            metricName: "minute",
+            metricPluralName: "minutes",
+            theme: selectedTheme
         )
     }
 

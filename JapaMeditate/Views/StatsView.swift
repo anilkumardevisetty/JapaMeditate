@@ -32,6 +32,7 @@ struct StatsView: View {
                     VStack(spacing: 16) {
                         headerTile
                         todayCard
+                        weeklySummaryCard
                         practiceCalendarCard
                         insightsCard
                         milestonesCard
@@ -119,6 +120,15 @@ private extension StatsView {
     var practiceCalendarCard: some View {
         PracticeCalendarCard(
             title: "Last 30 Days",
+            valuesByDate: stats.dailyRounds,
+            metricName: "round",
+            metricPluralName: "rounds",
+            theme: selectedTheme
+        )
+    }
+
+    var weeklySummaryCard: some View {
+        WeeklySummaryCard(
             valuesByDate: stats.dailyRounds,
             metricName: "round",
             metricPluralName: "rounds",
