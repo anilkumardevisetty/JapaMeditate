@@ -174,13 +174,21 @@ private extension HomeView {
                 FocusMetricTile(label: "Minutes", value: "\(todayMeditationMinutes())")
             }
 
-            HStack(spacing: 10) {
+            HStack(spacing: 12) {
                 NavigationLink(destination: CounterView()) {
-                    DailyFocusActionButton(icon: "circle.dotted", title: "Start Japa")
+                    DailyFocusActionButton(
+                        icon: "circle.dotted",
+                        title: "Start Japa",
+                        subtitle: "Chant now"
+                    )
                 }
 
                 NavigationLink(destination: MeditationView()) {
-                    DailyFocusActionButton(icon: "figure.mind.and.body", title: "Meditate")
+                    DailyFocusActionButton(
+                        icon: "figure.mind.and.body",
+                        title: "Start Meditation",
+                        subtitle: "Breathe now"
+                    )
                 }
             }
         }
@@ -310,21 +318,46 @@ private extension HomeView {
 struct DailyFocusActionButton: View {
     let icon: String
     let title: String
+    let subtitle: String
 
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.headline)
-            Text(title)
-                .font(.subheadline.bold())
-                .lineLimit(1)
-                .minimumScaleFactor(0.85)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.title2.weight(.semibold))
+
+                Spacer()
+
+                Image(systemName: "arrow.right.circle.fill")
+                    .font(.headline)
+                    .opacity(0.95)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.headline.bold())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
+
+                Text(subtitle)
+                    .font(.caption2.weight(.semibold))
+                    .opacity(0.88)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
+            }
         }
         .foregroundColor(.white)
-        .frame(maxWidth: .infinity, minHeight: 48)
-        .padding(.horizontal, 10)
-        .background(Color.white.opacity(0.20))
-        .cornerRadius(16)
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 96, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color.white.opacity(0.26))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.white.opacity(0.38), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.16), radius: 10, y: 5)
     }
 }
 
