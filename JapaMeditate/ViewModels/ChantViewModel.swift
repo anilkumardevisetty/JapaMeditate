@@ -40,14 +40,6 @@ class ChantViewModel: ObservableObject {
             HapticsManager.shared.finalTriplePulse()
         }
         justCompleted = true
-
-        if isSettingEnabled(SettingsKeys.autoReset, defaultValue: true) {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                self.reset()
-                self.justCompleted = false
-            }
-        }
-
     }
 
     func reset() {
