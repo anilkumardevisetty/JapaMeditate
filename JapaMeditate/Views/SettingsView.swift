@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @AppStorage(SettingsKeys.didCompleteOnboarding) private var didCompleteOnboarding: Bool = true
     @AppStorage(SettingsKeys.mantra) private var selectedMantra: String = Mantra.omNamahShivaya.rawValue
     @AppStorage(SettingsKeys.target) private var targetCount: Int = 108
     @AppStorage(SettingsKeys.hapticsEnabled) private var hapticsEnabled: Bool = true
@@ -32,6 +33,14 @@ struct SettingsView: View {
             Section(header: Text("Profile")) {
                 TextField("Your name", text: $userName)
             }
+
+            #if DEBUG
+            Section(header: Text("Testing")) {
+                Button("Show Onboarding Again") {
+                    didCompleteOnboarding = false
+                }
+            }
+            #endif
 
             // MARK: Mantra
             Section(header: Text("Mantra")) {

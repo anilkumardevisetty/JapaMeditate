@@ -12,14 +12,17 @@ struct CounterView: View {
     @AppStorage(SettingsKeys.mantra) private var selectedMantra: String = Mantra.omNamahShivaya.rawValue
     @AppStorage(SettingsKeys.customMantra) private var customMantraText: String = ""
     @AppStorage(SettingsKeys.target) private var targetCount: Int = 108
+    @AppStorage(SettingsKeys.autoReset) private var autoReset: Bool = true
     @AppStorage(SettingsKeys.wordAnimationEnabled) private var wordAnimationEnabled: Bool = false
     @AppStorage("selectedTheme") private var selectedTheme: AppTheme = .saffron
+    @AppStorage(SettingsKeys.intention) private var intention: String = ""
 
     // MARK: - Word animation state
     @State private var currentWord: String = ""
     @State private var showWord: Bool = false
     @State private var isAnimatingMantra: Bool = false
     @State private var currentWordIndex: Int = 0
+    @State private var stats: JapaStats = JapaStatsManager.shared.load()
 
     // MARK: - Mala (108 beads) state
     @State private var beadStates: [Bool] = Array(repeating: false, count: 108)
@@ -57,12 +60,14 @@ struct CounterView: View {
         ZStack {
             Color.white.ignoresSafeArea()
 
-            AppPanel {
-                VStack(spacing: 16) {
-                    introTile
-                    counterTile
-                    mantraPreviewTile
-                    actionsTile
+            ScrollView(showsIndicators: false) {
+                AppPanel {
+                    VStack(spacing: 16) {
+                        introTile
+                        counterTile
+                        mantraPreviewTile
+                        actionsTile
+                    }
                 }
             }
 
@@ -80,12 +85,18 @@ struct CounterView: View {
         }
         .onAppear {
             viewModel.total = targetCount
+            stats = JapaStatsManager.shared.load()
             syncBeadsWithCurrentCount()
         }
         .onChange(of: targetCount) { newValue in
             viewModel.total = newValue
             viewModel.reset()
             resetBeads()
+        }
+        .onChange(of: viewModel.justCompleted) { completed in
+            if completed {
+                stats = JapaStatsManager.shared.load()
+            }
         }
     }
 }
@@ -94,7 +105,7 @@ struct CounterView: View {
 private extension CounterView {
 
     var introTile: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("JAPA MODE")
                     .font(.caption2.smallCaps())
@@ -102,24 +113,36 @@ private extension CounterView {
 
                 Spacer()
 
-                if viewModel.count > 0 {
-                    Text("\(viewModel.count)/\(viewModel.total)")
-                        .font(.caption.bold())
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(Color.white.opacity(0.2))
-                        .cornerRadius(12)
-                        .foregroundColor(.white)
-                }
+                Text("\(viewModel.count)/\(viewModel.total)")
+                    .font(.caption.bold())
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.white.opacity(0.2))
+                    .cornerRadius(12)
+                    .foregroundColor(.white)
             }
 
-            Text("Chant with focus and devotion.")
+            Text(sessionTitle())
                 .font(.title3.bold())
                 .foregroundColor(.white)
 
-            Text("Tap the circle with ॐ to count each mantra.")
+            Text("One focused round • \(viewModel.total) chants")
                 .font(.footnote)
                 .foregroundColor(.white.opacity(0.95))
+
+            HStack(spacing: 10) {
+                CounterProgressChip(
+                    icon: "calendar",
+                    title: "Today",
+                    value: "\(todayRounds()) rounds"
+                )
+
+                CounterProgressChip(
+                    icon: "flame.fill",
+                    title: "Streak",
+                    value: "\(stats.currentStreak)d"
+                )
+            }
         }
         .padding(16)
         .background(selectedTheme.background)
@@ -140,7 +163,7 @@ private extension CounterView {
 
                 counterCircle
 
-                Text("Haptics at 27 • 54 • 80 • 108")
+                Text("Haptics at 27 • 54 • 80 • Completion")
                     .font(.caption2)
                     .foregroundColor(.white.opacity(0.8))
             }
@@ -272,14 +295,14 @@ private extension CounterView {
                     .font(.largeTitle.bold())
                     .foregroundColor(.white)
 
-                Text("You completed 108 chants.\nMay peace and blessings be with you.")
+                Text("You completed \(viewModel.total) chants.\nMay peace and blessings be with you.")
                     .font(.headline)
                     .foregroundColor(.white.opacity(0.95))
                     .multilineTextAlignment(.center)
 
                 Button(action: {
                     withAnimation {
-                        viewModel.justCompleted = false
+                        dismissCompletion()
                     }
                 }) {
                     Text("Continue")
@@ -318,6 +341,32 @@ private extension CounterView {
 // MARK: - Geometry helpers
 private extension CounterView {
 
+    func sessionTitle() -> String {
+        let trimmed = intention.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "Begin one focused round" : "Practice for \(trimmed)"
+    }
+
+    func todayRounds() -> Int {
+        stats.dailyRounds[todayKey(), default: 0]
+    }
+
+    func todayKey() -> String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: Date())
+    }
+
+    func dismissCompletion() {
+        viewModel.justCompleted = false
+
+        if autoReset {
+            viewModel.reset()
+            resetBeads()
+        } else {
+            syncBeadsWithCurrentCount()
+        }
+    }
+
     func positionForBead(in size: CGFloat, index: Int, total: Int = 108) -> CGPoint {
         let angle = (Double(index) / Double(total)) * 2 * Double.pi - Double.pi / 2
         let radius = Double(size) * 0.46
@@ -334,15 +383,6 @@ private extension CounterView {
         if !wordAnimationEnabled {
             viewModel.increment()
             updateBeadsAfterIncrement()
-
-            if viewModel.count == 108 {
-                if UserDefaults.standard.bool(forKey: SettingsKeys.hapticsEnabled) {
-                    HapticsManager.shared.finalTriplePulse()
-                }
-                viewModel.reset()
-                resetBeads()
-                viewModel.completeOneRound()
-            }
             return
         }
 
@@ -390,12 +430,6 @@ private extension CounterView {
         viewModel.increment()
         updateBeadsAfterIncrement()
 
-        if viewModel.count == 108 {
-            viewModel.reset()
-            resetBeads()
-            viewModel.completeOneRound()
-        }
-
         isAnimatingMantra = false
     }
 }
@@ -442,5 +476,33 @@ private struct CounterActionChip: ViewModifier {
             .background(Color.white.opacity(0.20))
             .clipShape(Capsule())
             .foregroundColor(.white)
+    }
+}
+
+private struct CounterProgressChip: View {
+    let icon: String
+    let title: String
+    let value: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.caption)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(.caption2)
+                    .opacity(0.82)
+
+                Text(value)
+                    .font(.caption.bold())
+            }
+        }
+        .foregroundColor(.white)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white.opacity(0.18))
+        .cornerRadius(14)
     }
 }

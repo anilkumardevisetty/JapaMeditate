@@ -19,6 +19,10 @@ struct MeditationStatsView: View {
                     VStack(spacing: 16) {
                         headerTile
                         todayCard
+                        weeklySummaryCard
+                        practiceCalendarCard
+                        insightsCard
+                        milestonesCard
                         StyledBanner()
                         lifetimeCard
                     }
@@ -98,6 +102,47 @@ private extension MeditationStatsView {
         .cornerRadius(24)
         .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
     }
+
+    var practiceCalendarCard: some View {
+        PracticeCalendarCard(
+            title: "Last 30 Days",
+            valuesByDate: stats.dailyMeditationMinutes,
+            metricName: "minute",
+            metricPluralName: "minutes",
+            theme: selectedTheme,
+            intensityLevel: meditationIntensityLevel
+        )
+    }
+
+    var weeklySummaryCard: some View {
+        WeeklySummaryCard(
+            valuesByDate: stats.dailyMeditationMinutes,
+            metricName: "minute",
+            metricPluralName: "minutes",
+            theme: selectedTheme
+        )
+    }
+
+    var insightsCard: some View {
+        PracticeInsightsCard(
+            valuesByDate: stats.dailyMeditationMinutes,
+            metricName: "minute",
+            metricPluralName: "minutes",
+            bestDayLabel: "Longest day",
+            averageLabel: "Daily average",
+            consistencyLabel: "Consistency",
+            emptyMessage: "Finish a meditation session to unlock your first meditation insight.",
+            theme: selectedTheme
+        )
+    }
+
+    var milestonesCard: some View {
+        MilestoneBadgesCard(
+            title: "Milestones",
+            milestones: meditationMilestones,
+            theme: selectedTheme
+        )
+    }
 }
 
 // MARK: - Helpers
@@ -113,10 +158,8 @@ private extension MeditationStatsView {
         stats.dailyMeditationSessions[todayKey, default: 0]
     }
 
-    /// Note: you currently store lifetimeMeditationMinutes, not per-day minutes.
-    /// So this reflects the same value you showed on HomeView.
     var todayMinutes: Int {
-        stats.lifetimeMeditationMinutes
+        stats.dailyMeditationMinutes[todayKey, default: 0]
     }
 
     var todayDisplayDate: String {
@@ -130,6 +173,56 @@ private extension MeditationStatsView {
         let f = DateFormatter()
         f.dateStyle = .medium
         return f.string(from: date)
+    }
+
+    func meditationIntensityLevel(minutes: Int) -> Int {
+        switch minutes {
+        case 0:
+            return 0
+        case 1..<10:
+            return 1
+        case 10..<20:
+            return 2
+        default:
+            return 3
+        }
+    }
+
+    var meditationMilestones: [PracticeMilestone] {
+        [
+            PracticeMilestone(
+                id: "first-session",
+                title: "First Session",
+                subtitle: stats.lifetimeMeditationSessions >= 1 ? "You created space to sit" : "Complete 1 session",
+                systemImage: "play.circle.fill",
+                isUnlocked: stats.lifetimeMeditationSessions >= 1
+            ),
+            PracticeMilestone(
+                id: "seven-active-days",
+                title: "7 Active Days",
+                subtitle: "\(activeMeditationDays) days recorded",
+                systemImage: "calendar.badge.checkmark",
+                isUnlocked: activeMeditationDays >= 7
+            ),
+            PracticeMilestone(
+                id: "hundred-minutes",
+                title: "100 Minutes",
+                subtitle: "\(stats.lifetimeMeditationMinutes) lifetime minutes",
+                systemImage: "clock.fill",
+                isUnlocked: stats.lifetimeMeditationMinutes >= 100
+            ),
+            PracticeMilestone(
+                id: "ten-sessions",
+                title: "10 Sessions",
+                subtitle: "\(stats.lifetimeMeditationSessions) sessions completed",
+                systemImage: "leaf.fill",
+                isUnlocked: stats.lifetimeMeditationSessions >= 10
+            )
+        ]
+    }
+
+    var activeMeditationDays: Int {
+        stats.dailyMeditationMinutes.values.filter { $0 > 0 }.count
     }
 }
 

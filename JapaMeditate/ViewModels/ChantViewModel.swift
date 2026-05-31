@@ -8,8 +8,6 @@ import SwiftUI
 import CoreHaptics
 import Combine
 
-import SwiftUI
-
 class ChantViewModel: ObservableObject {
     @Published var count: Int = 0
     @Published var total: Int = 108
@@ -24,9 +22,7 @@ class ChantViewModel: ObservableObject {
         guard count < total else { return }
         count += 1
 
-        // ✅ safer read with default = true
-        let hapticsEnabled = (UserDefaults.standard.object(forKey: SettingsKeys.hapticsEnabled) as? Bool) ?? true
-        if hapticsEnabled {
+        if isSettingEnabled(SettingsKeys.hapticsEnabled, defaultValue: true), count < total {
             HapticsManager.shared.trigger(for: count)
         }
 
@@ -38,27 +34,19 @@ class ChantViewModel: ObservableObject {
     private func completeSession() {
         let session = ChantSession(timestamp: Date(), count: count)
         sessions.append(session)
+        recordCompletedRound(beadCount: count)
 
-        if UserDefaults.standard.bool(forKey: SettingsKeys.hapticsEnabled) {
+        if isSettingEnabled(SettingsKeys.hapticsEnabled, defaultValue: true) {
             HapticsManager.shared.finalTriplePulse()
         }
         justCompleted = true
-
-        // auto reset after glow
-        if UserDefaults.standard.bool(forKey: SettingsKeys.autoReset) {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                self.reset()
-                self.justCompleted = false
-            }
-        }
-
     }
 
     func reset() {
         count = 0
     }
-    
-    func completeOneRound() {
+
+    private func recordCompletedRound(beadCount: Int) {
         var stats = JapaStatsManager.shared.load()
         
         let today = dateString(Date())
@@ -67,7 +55,7 @@ class ChantViewModel: ObservableObject {
         // Increment today's rounds
         stats.dailyRounds[today, default: 0] += 1
         stats.lifetimeRounds += 1
-        stats.lifetimeBeads += 108
+        stats.lifetimeBeads += beadCount
         
         // Update streak
         if stats.lastActiveDate == Date.distantPast {
@@ -87,6 +75,10 @@ class ChantViewModel: ObservableObject {
         stats.lastActiveDate = Date()
         
         JapaStatsManager.shared.save(stats)
+    }
+
+    private func isSettingEnabled(_ key: String, defaultValue: Bool) -> Bool {
+        (UserDefaults.standard.object(forKey: key) as? Bool) ?? defaultValue
     }
 
     func dateString(_ date: Date) -> String {

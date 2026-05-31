@@ -4,6 +4,7 @@ import Combine
 struct HomeView: View {
     @AppStorage("selectedTheme") private var selectedTheme: AppTheme = .saffron
     @AppStorage("userName") private var userName: String = ""
+    @AppStorage(SettingsKeys.intention) private var intention: String = ""
 
     @State private var stats: JapaStats = JapaStatsManager.shared.load()
     @State private var motivation: String = ""
@@ -27,16 +28,17 @@ struct HomeView: View {
                 GeometryReader { geo in
                     let isCompact = geo.size.height < 700
 
-                    AppPanel {
-                        VStack(spacing: isCompact ? 14 : 20) {
-                            heroCard(isCompact: isCompact)
-                            primaryActionsRow
-                            highlightsCard
-                            motivationQuote
-                            toolsRow
-                            adBannerTile
-                            Spacer(minLength: isCompact ? 8 : 12)
-                            footerQuote
+                    ScrollView(showsIndicators: false) {
+                        AppPanel {
+                            VStack(spacing: isCompact ? 14 : 20) {
+                                heroCard(isCompact: isCompact)
+                                dailyFocusCard
+                                highlightsCard
+                                motivationQuote
+                                toolsRow
+                                adBannerTile
+                                footerQuote
+                            }
                         }
                     }
                 }
@@ -101,26 +103,6 @@ private extension HomeView {
         .padding(.top, isCompact ? 6 : 10)
     }
 
-    var primaryActionsRow: some View {
-        HStack(spacing: 12) {
-            NavigationLink(destination: CounterView()) {
-                PrimaryActionTile(
-                    icon: "circle.dotted",
-                    title: "Japam",
-                    background: selectedTheme.background
-                )
-            }
-
-            NavigationLink(destination: MeditationView()) {
-                PrimaryActionTile(
-                    icon: "figure.mind.and.body",
-                    title: "Meditate",
-                    background: selectedTheme.background
-                )
-            }
-        }
-    }
-
     var highlightsCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
@@ -153,7 +135,61 @@ private extension HomeView {
 
             HStack(spacing: 12) {
                 HighlightStatCard(label: "Japa Rounds", value: "\(todayRounds())")
-                HighlightStatCard(label: "Meditation Mins", value: "\(stats.lifetimeMeditationMinutes)")
+                HighlightStatCard(label: "Meditation Mins", value: "\(todayMeditationMinutes())")
+            }
+        }
+        .padding(16)
+        .background(selectedTheme.background)
+        .cornerRadius(24)
+        .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
+    }
+
+    var dailyFocusCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Daily Focus")
+                        .font(.headline)
+                        .foregroundColor(.white)
+
+                    Text(focusTitle())
+                        .font(.subheadline.bold())
+                        .foregroundColor(.white)
+
+                    Text(focusMessage())
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.9))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer()
+
+                Image(systemName: "sun.max.fill")
+                    .font(.headline)
+                    .foregroundColor(.white.opacity(0.9))
+            }
+
+            HStack(spacing: 10) {
+                FocusMetricTile(label: "Rounds", value: "\(todayRounds())")
+                FocusMetricTile(label: "Minutes", value: "\(todayMeditationMinutes())")
+            }
+
+            HStack(spacing: 12) {
+                NavigationLink(destination: CounterView()) {
+                    DailyFocusActionButton(
+                        icon: "circle.dotted",
+                        title: "Start Japa",
+                        subtitle: "Chant now"
+                    )
+                }
+
+                NavigationLink(destination: MeditationView()) {
+                    DailyFocusActionButton(
+                        icon: "figure.mind.and.body",
+                        title: "Start Meditation",
+                        subtitle: "Breathe now"
+                    )
+                }
             }
         }
         .padding(16)
@@ -217,6 +253,11 @@ private extension HomeView {
         return stats.dailyRounds[today, default: 0]
     }
 
+    func todayMeditationMinutes() -> Int {
+        let today = formattedDate(Date())
+        return stats.dailyMeditationMinutes[today, default: 0]
+    }
+
     func formattedDate(_ date: Date) -> String {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
@@ -244,28 +285,100 @@ private extension HomeView {
         let trimmed = userName.trimmingCharacters(in: .whitespaces)
         return trimmed.isEmpty ? base : "\(base), \(trimmed)"
     }
+
+    func focusTitle() -> String {
+        let trimmed = intention.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "Settle into today's practice" : "\(trimmed) for today"
+    }
+
+    func focusMessage() -> String {
+        let rounds = todayRounds()
+        let minutes = todayMeditationMinutes()
+
+        if rounds > 0 && minutes > 0 {
+            return "You have touched both chanting and meditation today. Keep the rhythm gentle."
+        }
+
+        if rounds > 0 {
+            return "Your Japa is underway. A short meditation can complete today's balance."
+        }
+
+        if minutes > 0 {
+            return "You made space to breathe. One Japa round can carry that stillness forward."
+        }
+
+        if stats.currentStreak > 0 {
+            return "Continue your \(stats.currentStreak)-day streak with one round or a quiet meditation."
+        }
+
+        return "Begin with one round or a few quiet minutes. Small practice still counts."
+    }
 }
 
-// MARK: - Primary action tile (Japa / Meditate)
-
-struct PrimaryActionTile: View {
+struct DailyFocusActionButton: View {
     let icon: String
     let title: String
-    let background: LinearGradient
+    let subtitle: String
 
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon)
-                .font(.title2)
-            Text(title)
-                .font(.headline.bold())
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.title2.weight(.semibold))
+
+                Spacer()
+
+                Image(systemName: "arrow.right.circle.fill")
+                    .font(.headline)
+                    .opacity(0.95)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.headline.bold())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
+
+                Text(subtitle)
+                    .font(.caption2.weight(.semibold))
+                    .opacity(0.88)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
+            }
         }
         .foregroundColor(.white)
-        .frame(maxWidth: .infinity, minHeight: 72)
-        .padding(.horizontal, 12)
-        .background(background)
-        .cornerRadius(20)
-        .shadow(color: .black.opacity(0.12), radius: 10, y: 4)
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 96, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color.white.opacity(0.26))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.white.opacity(0.38), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.16), radius: 10, y: 5)
+    }
+}
+
+struct FocusMetricTile: View {
+    let label: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(value)
+                .font(.headline.bold())
+                .foregroundColor(.white)
+
+            Text(label)
+                .font(.caption2)
+                .foregroundColor(.white.opacity(0.88))
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white.opacity(0.16))
+        .cornerRadius(14)
     }
 }
 

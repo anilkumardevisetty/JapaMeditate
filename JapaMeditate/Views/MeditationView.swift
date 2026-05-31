@@ -498,6 +498,7 @@ private extension MeditationView {
         stats.lifetimeMeditationSessions += 1
         stats.lifetimeMeditationMinutes += selectedSessionLength
         stats.dailyMeditationSessions[today, default: 0] += 1
+        stats.dailyMeditationMinutes[today, default: 0] += selectedSessionLength
         stats.lastMeditationDate = Date()
 
         JapaStatsManager.shared.save(stats)
@@ -661,4 +662,3 @@ private struct BreathingPatternSelector: View {
         .opacity(isRunning ? 0.85 : 1.0)
     }
 }
-
