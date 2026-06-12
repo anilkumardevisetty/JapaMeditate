@@ -1,9 +1,11 @@
 import SwiftUI
 import UIKit
 import Combine
+import StoreKit
 
 struct CounterView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.requestReview) private var requestReview
 
     @StateObject private var viewModel = ChantViewModel()
     @StateObject private var confettiManager = ConfettiManager()
@@ -364,6 +366,16 @@ private extension CounterView {
             resetBeads()
         } else {
             syncBeadsWithCurrentCount()
+        }
+
+        requestReviewIfAppropriate(for: .japaRoundCompleted, stats: stats)
+    }
+
+    func requestReviewIfAppropriate(for event: PracticeEvent, stats: JapaStats) {
+        guard RatingPromptManager.shared.shouldRequestReview(for: event, stats: stats) else { return }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            requestReview()
         }
     }
 

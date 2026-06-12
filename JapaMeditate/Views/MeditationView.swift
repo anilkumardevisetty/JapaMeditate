@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreHaptics
+import StoreKit
 
 // MARK: - Breathing Patterns
 
@@ -79,6 +80,7 @@ enum BreathingPattern: String, CaseIterable, Identifiable {
 
 struct MeditationView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.requestReview) private var requestReview
     @AppStorage("selectedTheme") private var selectedTheme: AppTheme = .saffron
 
     // MARK: Breathing State
@@ -397,6 +399,7 @@ private extension MeditationView {
                 Button(action: {
                     showCompletionPopup = false
                     meditationCompleted = false
+                    requestReviewIfAppropriate()
                 }) {
                     Text("Continue")
                         .modifier(MeditationPrimaryButton())
@@ -502,6 +505,15 @@ private extension MeditationView {
         stats.lastMeditationDate = Date()
 
         JapaStatsManager.shared.save(stats)
+    }
+
+    func requestReviewIfAppropriate() {
+        let stats = JapaStatsManager.shared.load()
+        guard RatingPromptManager.shared.shouldRequestReview(for: .meditationCompleted, stats: stats) else { return }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            requestReview()
+        }
     }
 
     func runBreathingCycle() {

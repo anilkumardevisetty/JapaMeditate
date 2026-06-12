@@ -6,8 +6,15 @@
 //
 
 import SwiftUI
+#if DEBUG
+import StoreKit
+#endif
 
 struct SettingsView: View {
+    #if DEBUG
+    @Environment(\.requestReview) private var requestReview
+    #endif
+
     @AppStorage(SettingsKeys.didCompleteOnboarding) private var didCompleteOnboarding: Bool = true
     @AppStorage(SettingsKeys.mantra) private var selectedMantra: String = Mantra.omNamahShivaya.rawValue
     @AppStorage(SettingsKeys.target) private var targetCount: Int = 108
@@ -38,6 +45,14 @@ struct SettingsView: View {
             Section(header: Text("Testing")) {
                 Button("Show Onboarding Again") {
                     didCompleteOnboarding = false
+                }
+
+                Button("Reset Rating Prompt Testing") {
+                    RatingPromptManager.shared.resetForTesting()
+                }
+
+                Button("Force Review Prompt") {
+                    requestReview()
                 }
             }
             #endif
