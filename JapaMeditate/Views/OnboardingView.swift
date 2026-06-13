@@ -278,6 +278,15 @@ private extension OnboardingView {
         remindersEnabled = enableReminder
         reminderTime = Self.secondsSinceMidnight(from: reminderDate)
 
+        AnalyticsManager.shared.log(
+            .onboardingCompleted,
+            parameters: [
+                "intention": intention,
+                "mantra": mantra.rawValue,
+                "reminders_enabled": enableReminder
+            ]
+        )
+
         if enableReminder {
             didRequestNotificationPermission = true
             NotificationManager.shared.requestPermission { granted in

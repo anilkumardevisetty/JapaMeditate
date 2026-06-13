@@ -1,7 +1,10 @@
 import SwiftUI
 import Combine
+import StoreKit
 
 struct HomeView: View {
+    @Environment(\.requestReview) private var requestReview
+
     @AppStorage("selectedTheme") private var selectedTheme: AppTheme = .saffron
     @AppStorage("userName") private var userName: String = ""
     @AppStorage(SettingsKeys.intention) private var intention: String = ""
@@ -47,6 +50,8 @@ struct HomeView: View {
         .onAppear {
             stats = JapaStatsManager.shared.load()
             motivation = motivationQuotes.randomElement() ?? ""
+            AnalyticsManager.shared.log(.homeViewed)
+            requestReviewIfAppropriate()
         }
     }
 }
@@ -284,6 +289,14 @@ private extension HomeView {
         let base = greetingBase()
         let trimmed = userName.trimmingCharacters(in: .whitespaces)
         return trimmed.isEmpty ? base : "\(base), \(trimmed)"
+    }
+
+    func requestReviewIfAppropriate() {
+        guard RatingPromptManager.shared.shouldRequestReview(for: .appOpened, stats: stats) else { return }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            requestReview()
+        }
     }
 
     func focusTitle() -> String {

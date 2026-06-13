@@ -35,6 +35,7 @@ struct MeditationStatsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             stats = JapaStatsManager.shared.load()
+            AnalyticsManager.shared.log(.meditationStatsViewed)
         }
     }
 }

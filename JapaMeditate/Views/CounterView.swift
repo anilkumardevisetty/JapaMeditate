@@ -1,9 +1,11 @@
 import SwiftUI
 import UIKit
 import Combine
+import StoreKit
 
 struct CounterView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.requestReview) private var requestReview
 
     @StateObject private var viewModel = ChantViewModel()
     @StateObject private var confettiManager = ConfettiManager()
@@ -96,6 +98,14 @@ struct CounterView: View {
         .onChange(of: viewModel.justCompleted) { completed in
             if completed {
                 stats = JapaStatsManager.shared.load()
+                AnalyticsManager.shared.log(
+                    .japaRoundCompleted,
+                    parameters: [
+                        "target_count": viewModel.total,
+                        "lifetime_rounds": stats.lifetimeRounds,
+                        "current_streak": stats.currentStreak
+                    ]
+                )
             }
         }
     }
@@ -365,6 +375,16 @@ private extension CounterView {
         } else {
             syncBeadsWithCurrentCount()
         }
+
+        requestReviewIfAppropriate(for: .japaRoundCompleted, stats: stats)
+    }
+
+    func requestReviewIfAppropriate(for event: PracticeEvent, stats: JapaStats) {
+        guard RatingPromptManager.shared.shouldRequestReview(for: event, stats: stats) else { return }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            requestReview()
+        }
     }
 
     func positionForBead(in size: CGFloat, index: Int, total: Int = 108) -> CGPoint {
@@ -381,6 +401,7 @@ private extension CounterView {
 
     func handleTap() {
         if !wordAnimationEnabled {
+            logJapaStartedIfNeeded()
             viewModel.increment()
             updateBeadsAfterIncrement()
             return
@@ -427,10 +448,19 @@ private extension CounterView {
     }
 
     func finishMantra() {
+        logJapaStartedIfNeeded()
         viewModel.increment()
         updateBeadsAfterIncrement()
 
         isAnimatingMantra = false
+    }
+
+    func logJapaStartedIfNeeded() {
+        guard viewModel.count == 0 else { return }
+        AnalyticsManager.shared.log(
+            .japaStarted,
+            parameters: ["target_count": viewModel.total]
+        )
     }
 }
 

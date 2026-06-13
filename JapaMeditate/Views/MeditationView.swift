@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreHaptics
+import StoreKit
 
 // MARK: - Breathing Patterns
 
@@ -79,6 +80,7 @@ enum BreathingPattern: String, CaseIterable, Identifiable {
 
 struct MeditationView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.requestReview) private var requestReview
     @AppStorage("selectedTheme") private var selectedTheme: AppTheme = .saffron
 
     // MARK: Breathing State
@@ -397,6 +399,7 @@ private extension MeditationView {
                 Button(action: {
                     showCompletionPopup = false
                     meditationCompleted = false
+                    requestReviewIfAppropriate()
                 }) {
                     Text("Continue")
                         .modifier(MeditationPrimaryButton())
@@ -459,6 +462,14 @@ private extension MeditationView {
 
         isRunning = true
 
+        AnalyticsManager.shared.log(
+            .meditationStarted,
+            parameters: [
+                "session_length_minutes": selectedSessionLength,
+                "breathing_pattern": selectedPattern.rawValue
+            ]
+        )
+
         runBreathingCycle()
         countdownTimer()
     }
@@ -502,6 +513,25 @@ private extension MeditationView {
         stats.lastMeditationDate = Date()
 
         JapaStatsManager.shared.save(stats)
+
+        AnalyticsManager.shared.log(
+            .meditationCompleted,
+            parameters: [
+                "session_length_minutes": selectedSessionLength,
+                "breathing_pattern": selectedPattern.rawValue,
+                "lifetime_sessions": stats.lifetimeMeditationSessions,
+                "lifetime_minutes": stats.lifetimeMeditationMinutes
+            ]
+        )
+    }
+
+    func requestReviewIfAppropriate() {
+        let stats = JapaStatsManager.shared.load()
+        guard RatingPromptManager.shared.shouldRequestReview(for: .meditationCompleted, stats: stats) else { return }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            requestReview()
+        }
     }
 
     func runBreathingCycle() {

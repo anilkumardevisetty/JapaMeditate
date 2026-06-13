@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		044FCC1B2ECBFE6500F9F874 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 044FCC1A2ECBFE6500F9F874 /* GoogleMobileAds */; };
+		04A001012EEB000100000001 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 04A001002EEB000100000001 /* FirebaseAnalytics */; };
+		04A001032EEB000100000001 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 04A001022EEB000100000001 /* FirebaseCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +42,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				04A001012EEB000100000001 /* FirebaseAnalytics in Frameworks */,
+				04A001032EEB000100000001 /* FirebaseCore in Frameworks */,
 				044FCC1B2ECBFE6500F9F874 /* GoogleMobileAds in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -83,6 +87,8 @@
 			);
 			name = JapaMeditate;
 			packageProductDependencies = (
+				04A001002EEB000100000001 /* FirebaseAnalytics */,
+				04A001022EEB000100000001 /* FirebaseCore */,
 				044FCC1A2ECBFE6500F9F874 /* GoogleMobileAds */,
 			);
 			productName = Japa108App;
@@ -114,6 +120,7 @@
 			mainGroup = 0407214C2EC95DC3007BEC24;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				04A001042EEB000100000001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				044FCC192ECBFE6500F9F874 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -371,6 +378,14 @@
 				minimumVersion = 12.13.0;
 			};
 		};
+		04A001042EEB000100000001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -378,6 +393,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 044FCC192ECBFE6500F9F874 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
 			productName = GoogleMobileAds;
+		};
+		04A001002EEB000100000001 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 04A001042EEB000100000001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		04A001022EEB000100000001 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 04A001042EEB000100000001 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
