@@ -98,6 +98,14 @@ struct CounterView: View {
         .onChange(of: viewModel.justCompleted) { completed in
             if completed {
                 stats = JapaStatsManager.shared.load()
+                AnalyticsManager.shared.log(
+                    .japaRoundCompleted,
+                    parameters: [
+                        "target_count": viewModel.total,
+                        "lifetime_rounds": stats.lifetimeRounds,
+                        "current_streak": stats.currentStreak
+                    ]
+                )
             }
         }
     }
@@ -393,6 +401,7 @@ private extension CounterView {
 
     func handleTap() {
         if !wordAnimationEnabled {
+            logJapaStartedIfNeeded()
             viewModel.increment()
             updateBeadsAfterIncrement()
             return
@@ -439,10 +448,19 @@ private extension CounterView {
     }
 
     func finishMantra() {
+        logJapaStartedIfNeeded()
         viewModel.increment()
         updateBeadsAfterIncrement()
 
         isAnimatingMantra = false
+    }
+
+    func logJapaStartedIfNeeded() {
+        guard viewModel.count == 0 else { return }
+        AnalyticsManager.shared.log(
+            .japaStarted,
+            parameters: ["target_count": viewModel.total]
+        )
     }
 }
 

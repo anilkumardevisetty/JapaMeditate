@@ -9,6 +9,7 @@ struct JapaMeditateApp: App {
 
     init() {
         Self.markExistingUsersOnboarded()
+        AnalyticsManager.shared.configureIfAvailable()
         MobileAds.shared.start()
     }
 

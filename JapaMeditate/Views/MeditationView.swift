@@ -462,6 +462,14 @@ private extension MeditationView {
 
         isRunning = true
 
+        AnalyticsManager.shared.log(
+            .meditationStarted,
+            parameters: [
+                "session_length_minutes": selectedSessionLength,
+                "breathing_pattern": selectedPattern.rawValue
+            ]
+        )
+
         runBreathingCycle()
         countdownTimer()
     }
@@ -505,6 +513,16 @@ private extension MeditationView {
         stats.lastMeditationDate = Date()
 
         JapaStatsManager.shared.save(stats)
+
+        AnalyticsManager.shared.log(
+            .meditationCompleted,
+            parameters: [
+                "session_length_minutes": selectedSessionLength,
+                "breathing_pattern": selectedPattern.rawValue,
+                "lifetime_sessions": stats.lifetimeMeditationSessions,
+                "lifetime_minutes": stats.lifetimeMeditationMinutes
+            ]
+        )
     }
 
     func requestReviewIfAppropriate() {

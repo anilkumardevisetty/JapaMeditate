@@ -50,6 +50,7 @@ struct HomeView: View {
         .onAppear {
             stats = JapaStatsManager.shared.load()
             motivation = motivationQuotes.randomElement() ?? ""
+            AnalyticsManager.shared.log(.homeViewed)
             requestReviewIfAppropriate()
         }
     }
